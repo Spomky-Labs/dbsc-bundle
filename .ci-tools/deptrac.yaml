@@ -1,0 +1,24 @@
+deptrac:
+    paths:
+        - ./../src
+    layers:
+        - name: 'library'
+          collectors:
+              - type: 'directory'
+                value: 'src/.*'
+        - name: 'vendors'
+          collectors:
+              - { type: classLike, value: '^Jose\\' }
+              - { type: classLike, value: '^Symfony\\Bundle\\SecurityBundle' }
+              - { type: classLike, value: '^Symfony\\Component\\Config' }
+              - { type: classLike, value: '^Symfony\\Component\\DependencyInjection' }
+              - { type: classLike, value: '^Symfony\\Component\\EventDispatcher' }
+              - { type: classLike, value: '^Symfony\\Component\\HttpFoundation' }
+              - { type: classLike, value: '^Symfony\\Component\\HttpKernel' }
+              - { type: classLike, value: '^Symfony\\Component\\Routing' }
+              - { type: classLike, value: '^Symfony\\Component\\Security' }
+              - { type: classLike, value: '^Psr\\Clock' }
+              - { type: classLike, value: '^Psr\\Log' }
+    ruleset:
+        library:
+            - 'vendors'

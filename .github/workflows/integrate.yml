@@ -1,0 +1,183 @@
+name: 📁 PHP CI
+
+on:
+  push:
+    branches:
+      - "main"
+      - "*.x"
+  pull_request: ~
+  workflow_dispatch: ~
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pre_checks:
+    name: "0️⃣ Pre-checks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: "Check file permissions"
+        run: |
+          NON_EXECUTABLE=$(find . -type f -not -path './.git/*' -not -path './link' -executable)
+          if [[ -n "$NON_EXECUTABLE" ]]; then
+            echo "Found non-executable files with executable permission:"
+            echo "$NON_EXECUTABLE"
+            exit 1
+          fi
+
+      - name: "Find non-printable ASCII characters"
+        run: |
+          if LC_ALL=C.UTF-8 find . -type f -name "*.php" -print0 | xargs -0 grep -PHn "[[:cntrl:]]"; then
+            echo "Non-printable ASCII characters found"
+            exit 1
+          fi
+
+  phpstan:
+    name: "1️⃣ Static Analysis (PHPStan)"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --optimize-autoloader
+      - run: castor phpstan
+
+  ecs:
+    name: "2️⃣ Coding Standards (ECS)"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --optimize-autoloader
+      - run: castor ecs
+
+  rector:
+    name: "3️⃣ Refactoring (Rector)"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --optimize-autoloader
+      - run: castor rector
+
+  validate:
+    name: "4️⃣ Validate composer.json"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --optimize-autoloader
+      - run: |
+          composer dump-autoload --optimize --strict-psr
+          composer validate --strict
+
+  lint:
+    name: "5️⃣ Syntax Check"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - run: composer exec -- parallel-lint src tests config
+
+  check_licenses:
+    name: "6️⃣ License Check"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --optimize-autoloader
+      - run: castor check-licenses
+
+  deptrac:
+    name: "7️⃣ Architecture Layer Check (Deptrac)"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/spomky-labs/phpqa:8.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --optimize-autoloader
+      - run: castor deptrac
+
+  tests:
+    name: "8️⃣ Tests (PHP ${{ matrix.php-version }}${{ matrix.lowest-deps && ' --prefer-lowest' || '' }})"
+    needs:
+      - phpstan
+      - ecs
+      - rector
+      - lint
+      - validate
+      - check_licenses
+      - deptrac
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php-version: '8.2'
+            lowest-deps: true
+          - php-version: '8.2'
+          - php-version: '8.3'
+          - php-version: '8.4'
+          - php-version: '8.5'
+    container:
+      image: ghcr.io/spomky-labs/phpqa:${{ matrix.php-version }}
+    env:
+      XDEBUG_MODE: coverage
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.lowest-deps && 'lowest' || 'highest' }}
+          composer-options: --no-interaction --no-progress --optimize-autoloader
+      - name: Run PHPUnit
+        run: castor phpunit
+
+  exported_files:
+    name: "📁 Exported Files Check"
+    needs: [pre_checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check exported files
+        run: |
+          EXPECTED="LICENSE,README.md,RELEASES.md,SECURITY.md,composer.json"
+          CURRENT=$(git archive HEAD | tar --list | grep -v '/$' | grep -Ev '^(config|src|templates)/' | sort | paste -sd "," -)
+          echo "CURRENT = ${CURRENT}"
+          echo "EXPECTED = ${EXPECTED}"
+          if [[ "$CURRENT" != "$EXPECTED" ]]; then
+            echo "❌ Exported files do not match expected list"
+            exit 1
+          fi

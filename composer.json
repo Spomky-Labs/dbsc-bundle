@@ -1,0 +1,68 @@
+{
+    "name": "spomky-labs/dbsc-bundle",
+    "description": "Device Bound Session Credentials (DBSC) for Symfony - protect sessions from cookie theft with hardware-bound keys.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "dbsc",
+        "device-bound-session-credentials",
+        "session",
+        "security",
+        "cookie-theft",
+        "tpm",
+        "symfony",
+        "bundle"
+    ],
+    "homepage": "https://github.com/spomky-labs",
+    "authors": [
+        {
+            "name": "Florent Morselli",
+            "homepage": "https://github.com/Spomky"
+        },
+        {
+            "name": "All contributors",
+            "homepage": "https://github.com/spomky-labs/dbsc-bundle/contributors"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SpomkyLabs\\DbscBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SpomkyLabs\\DbscBundle\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "psr/clock": "^1.0",
+        "psr/log": "^1.1|^2.0|^3.0",
+        "symfony/config": "^7.4|^8.0",
+        "symfony/dependency-injection": "^7.4|^8.0",
+        "symfony/http-foundation": "^7.4|^8.0",
+        "symfony/http-kernel": "^7.4|^8.0",
+        "symfony/routing": "^7.4|^8.0",
+        "symfony/security-bundle": "^7.4|^8.0",
+        "symfony/security-core": "^7.4|^8.0",
+        "symfony/security-http": "^7.4|^8.0",
+        "web-token/jwt-library": "^4.0"
+    },
+    "require-dev": {
+        "symfony/framework-bundle": "^7.4|^8.0"
+    },
+    "suggest": {
+        "symfony/web-profiler-bundle": "To show the DBSC panel in the web profiler."
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "spomky-labs/dbsc-bundle",
+            "url": "https://github.com/spomky-labs/dbsc-bundle"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

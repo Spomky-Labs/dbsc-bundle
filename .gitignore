@@ -1,0 +1,14 @@
+/vendor/
+/composer.lock
+/var/
+/tmp-phpqa/
+/.ci-tools/.phpunit.cache/
+/.ci-tools/coverage/
+/.ci-tools/infection.log
+/.phpunit.cache/
+/.phpunit.result.cache
+/.php-cs-fixer.cache
+/build/
+.idea/
+.castor.stub.php
+/.deptrac.cache
