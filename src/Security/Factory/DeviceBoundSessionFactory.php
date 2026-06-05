@@ -90,6 +90,12 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->info('Lifetime of a single-use challenge, in seconds.')
             ->defaultValue(300)
             ->end()
+            ->integerNode('session_lifetime')
+            ->info(
+                'Lifetime of the device-bound credential (the binding), in seconds, independent of the cookie. Null never expires.'
+            )
+            ->defaultNull()
+            ->end()
             ->scalarNode('register')
             ->info('Path of the registration endpoint. Null derives /dbsc/<firewall>/register.')
             ->defaultNull()
@@ -148,6 +154,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $cookie = $config['cookie'];
         /** @var int $challengeTtl */
         $challengeTtl = $config['challenge_ttl'];
+        /** @var int|null $sessionLifetime */
+        $sessionLifetime = $config['session_lifetime'];
         /** @var string|null $bindingRepository */
         $bindingRepository = $config['binding_repository'];
         /** @var string|null $challengeStore */
@@ -204,7 +212,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->replaceArgument(0, new Reference($verifierId))
             ->replaceArgument(1, new Reference($challengeManagerId))
             ->replaceArgument(2, new Reference($repositoryId))
-            ->replaceArgument(3, new Reference($sessionConfigId));
+            ->replaceArgument(3, new Reference($sessionConfigId))
+            ->replaceArgument(6, $sessionLifetime);
 
         $registrationControllerId = 'dbsc.registration_controller.' . $firewallName;
         $container->setDefinition($registrationControllerId, new ChildDefinition('dbsc.registration_controller'))

@@ -26,11 +26,13 @@ final class RefreshEndpointTest extends WebTestCase
             'HTTP_' . str_replace('-', '_', strtoupper(SecureSessionHeaders::SESSION_ID)) => 'session-1',
         ]);
 
-        // Then the server challenges the device
+        // Then the server challenges the device with a 403 carrying the session id
         $response = $client->getResponse();
-        static::assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        static::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
         static::assertTrue($response->headers->has(SecureSessionHeaders::CHALLENGE));
-        static::assertNotSame('', (string) $response->headers->get(SecureSessionHeaders::CHALLENGE));
+        $challenge = (string) $response->headers->get(SecureSessionHeaders::CHALLENGE);
+        static::assertNotSame('', $challenge);
+        static::assertStringContainsString('id="session-1"', $challenge);
     }
 
     #[Test]

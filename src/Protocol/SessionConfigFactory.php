@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SpomkyLabs\DbscBundle\Protocol;
 
+use function is_string;
+use const PHP_URL_HOST;
+
 /**
  * Builds the DBSC session configuration document returned from the registration and
  * refresh endpoints.
@@ -26,13 +29,21 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
      */
     public function create(string $sessionIdentifier, string $origin): array
     {
+        $host = parse_url($origin, PHP_URL_HOST);
+
         return [
             'session_identifier' => $sessionIdentifier,
             'refresh_url' => $this->refreshPath,
             'scope' => [
                 'origin' => $origin,
-                'include_site' => true,
-                'scope_specification' => [],
+                'include_site' => false,
+                'scope_specification' => [
+                    [
+                        'type' => 'include',
+                        'domain' => is_string($host) ? $host : '',
+                        'path' => '/',
+                    ],
+                ],
             ],
             'credentials' => [
                 [

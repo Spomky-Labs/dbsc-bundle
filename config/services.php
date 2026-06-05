@@ -117,6 +117,8 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('binding repository, set by the security factory'),
             abstract_arg('session config factory, set by the security factory'),
             service(TokenGeneratorInterface::class),
+            service('clock'),
+            abstract_arg('session lifetime, set by the security factory'),
         ]);
 
     $services->set('dbsc.registration_controller', RegistrationController::class)

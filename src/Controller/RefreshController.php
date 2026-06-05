@@ -9,6 +9,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use SpomkyLabs\DbscBundle\Challenge\ChallengeManagerInterface;
 use SpomkyLabs\DbscBundle\Exception\DbscException;
+use SpomkyLabs\DbscBundle\Exception\SessionExpiredException;
+use SpomkyLabs\DbscBundle\Exception\UnknownSessionException;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactoryInterface;
 use SpomkyLabs\DbscBundle\Http\SecureSessionHeaders;
 use SpomkyLabs\DbscBundle\Protocol\RefreshHandlerInterface;
@@ -18,9 +20,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * DBSC refresh endpoint. A request without a proof is answered with a fresh challenge
- * (401 + `Secure-Session-Challenge`); the browser retries with a signed proof in
- * `Secure-Session-Response`, which is verified before a new bound cookie is issued.
+ * DBSC refresh endpoint. A request without a proof is answered with a challenge (403 +
+ * `Secure-Session-Challenge` carrying the session id); the browser retries with a signed proof
+ * in `Secure-Session-Response`, which is verified before a new bound cookie is issued. A dead or
+ * expired session is answered with a terminating 4xx so the browser stops the session.
  */
 final readonly class RefreshController
 {
@@ -49,6 +52,14 @@ final readonly class RefreshController
 
         try {
             $issued = $this->handler->refresh($sessionIdentifier, $proof, $request->getSchemeAndHttpHost());
+        } catch (UnknownSessionException | SessionExpiredException $e) {
+            $this->logger->info('DBSC session terminated on refresh.', [
+                'exception' => $e,
+            ]);
+
+            return new JsonResponse([
+                'error' => 'session_terminated',
+            ], Response::HTTP_UNAUTHORIZED);
         } catch (DbscException $e) {
             $this->logger->warning('DBSC refresh rejected.', [
                 'exception' => $e,
@@ -79,8 +90,11 @@ final readonly class RefreshController
     {
         $challenge = $this->challengeManager->issue($sessionIdentifier);
 
-        $response = new JsonResponse(null, Response::HTTP_UNAUTHORIZED);
-        $response->headers->set(SecureSessionHeaders::CHALLENGE, sprintf('"%s"', $challenge->value));
+        $response = new JsonResponse(null, Response::HTTP_FORBIDDEN);
+        $response->headers->set(
+            SecureSessionHeaders::CHALLENGE,
+            sprintf('"%s";id="%s"', $challenge->value, $sessionIdentifier),
+        );
 
         return $response;
     }

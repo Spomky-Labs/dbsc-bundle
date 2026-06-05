@@ -34,7 +34,12 @@ final class SessionConfigFactoryTest extends TestCase
         static::assertSame('session-1', $config['session_identifier']);
         static::assertSame('/dbsc/refresh', $config['refresh_url']);
         static::assertSame('https://example.com', $config['scope']['origin']);
-        static::assertTrue($config['scope']['include_site']);
+        static::assertFalse($config['scope']['include_site']);
+        static::assertSame([
+            'type' => 'include',
+            'domain' => 'example.com',
+            'path' => '/',
+        ], $config['scope']['scope_specification'][0]);
         static::assertSame('__Host-Http-dbsc_session', $config['credentials'][0]['name']);
         static::assertStringContainsString('Secure', (string) $config['credentials'][0]['attributes']);
         static::assertStringContainsString('SameSite=Lax', (string) $config['credentials'][0]['attributes']);
