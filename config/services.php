@@ -158,6 +158,7 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('binding repository, set by the security factory'),
             abstract_arg('user provider, set by the security factory'),
             abstract_arg('cookie name, set by the security factory'),
+            service('security.token_storage'),
         ]);
 
     // --- Cross-firewall infrastructure ------------------------------------------------------

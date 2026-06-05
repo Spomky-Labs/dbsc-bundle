@@ -6,6 +6,7 @@ namespace SpomkyLabs\DbscBundle\Security;
 
 use SpomkyLabs\DbscBundle\Session\SessionBindingRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
@@ -36,12 +37,22 @@ final class DeviceBoundSessionAuthenticator extends AbstractAuthenticator
         private readonly SessionBindingRepository $bindings,
         private readonly UserProviderInterface $userProvider,
         private readonly string $cookieName,
+        private readonly TokenStorageInterface $tokenStorage,
     ) {
     }
 
-    public function supports(Request $request): bool
+    /**
+     * Lazy, remember-me-like: false when a token is already established for the request (e.g.
+     * restored from the session) so a live full session keeps IS_AUTHENTICATED_FULLY; null (lazy)
+     * when only the bound cookie is present, authenticating when nothing else did.
+     */
+    public function supports(Request $request): ?bool
     {
-        return $request->cookies->has($this->cookieName);
+        if ($this->tokenStorage->getToken() !== null) {
+            return false;
+        }
+
+        return $request->cookies->has($this->cookieName) ? null : false;
     }
 
     public function authenticate(Request $request): Passport
