@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class FullReplacementFirewallTest extends WebTestCase
 {
-    private const COOKIE = '__Host-Http-dbsc_session';
+    private const COOKIE = 'dbsc_session';
 
     #[Test]
     public function itAuthenticatesAProtectedRequestFromTheBoundCookie(): void

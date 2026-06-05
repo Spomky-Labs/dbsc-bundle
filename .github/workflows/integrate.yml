@@ -173,7 +173,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Check exported files
         run: |
-          EXPECTED="LICENSE,README.md,RELEASES.md,SECURITY.md,composer.json"
+          EXPECTED="CHANGELOG.md,LICENSE,README.md,RELEASES.md,SECURITY.md,composer.json"
           CURRENT=$(git archive HEAD | tar --list | grep -v '/$' | grep -Ev '^(config|src|templates)/' | sort | paste -sd "," -)
           echo "CURRENT = ${CURRENT}"
           echo "EXPECTED = ${EXPECTED}"

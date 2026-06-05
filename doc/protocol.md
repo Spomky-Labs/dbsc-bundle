@@ -37,14 +37,20 @@ cookie token) and responds:
 
 ```
 HTTP/1.1 200 OK
-Set-Cookie: __Host-Http-dbsc_session=<token>; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax
+Set-Cookie: dbsc_session=<token>; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax
 
 {
   "session_identifier": "<opaque id>",
   "refresh_url": "/dbsc/main/refresh",
-  "scope": { "origin": "https://example.com", "include_site": true, "scope_specification": [] },
+  "scope": {
+    "origin": "https://example.com",
+    "include_site": false,
+    "scope_specification": [
+      { "type": "include", "domain": "example.com", "path": "/" }
+    ]
+  },
   "credentials": [
-    { "type": "cookie", "name": "__Host-Http-dbsc_session", "attributes": "Path=/; Secure; HttpOnly; SameSite=Lax" }
+    { "type": "cookie", "name": "dbsc_session", "attributes": "Path=/; Secure; HttpOnly; SameSite=Lax" }
   ]
 }
 ```
@@ -61,11 +67,12 @@ POST /dbsc/main/refresh
 Sec-Secure-Session-Id: <session_identifier>
 ```
 
-The server answers with a fresh challenge:
+The server answers with a fresh challenge. The status is `403` (a `4xx` other than `403` would make
+the browser terminate the session), and the challenge carries the session id in an `id` parameter:
 
 ```
-HTTP/1.1 401 Unauthorized
-Secure-Session-Challenge: "<value>"
+HTTP/1.1 403 Forbidden
+Secure-Session-Challenge: "<value>";id="<session_identifier>"
 ```
 
 Second request, with the signed challenge:
@@ -80,8 +87,11 @@ The server verifies the signature against the stored public key, consumes the ch
 the cookie token and responds with the same session configuration document and a new
 `Set-Cookie`. The browser then resumes the request it had deferred.
 
-An unknown session identifier or an invalid proof is answered with a fresh challenge (`401`)
-rather than an error that would reveal whether the session exists.
+An invalid or stale proof is answered with a fresh challenge (`403`) so the browser retries. An
+**unknown or expired** session, by contrast, is answered with a terminating `4xx` (`401`): the
+browser ends the session and stops refreshing. Deleting a binding server-side (revocation, or the
+automatic logout cleanup) therefore signs the device out, even though it still holds the device
+key, because the server no longer has the public key to verify its proof.
 
 ## Access control
 

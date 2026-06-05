@@ -36,13 +36,20 @@ security:
                 # Lifetime of a single-use challenge, in seconds.
                 challenge_ttl: 300
 
+                # Lifetimes
+                # Lifetime of the credential (the binding), in seconds, independent of the cookie.
+                # null never expires.
+                session_lifetime: null
+                # Paths kept out of the session scope so their requests never trigger a refresh.
+                scope_exclude_paths: []
+
                 # Storage (null = per-firewall in-memory, dev/test only)
                 binding_repository: null
                 challenge_store: null
 
                 # Bound cookie
                 cookie:
-                    name: '__Host-Http-dbsc_session'
+                    name: 'dbsc_session'
                     lifetime: 600
                     path: '/'
                     domain: null
@@ -86,6 +93,31 @@ specific reason to widen it.
 How long an issued challenge stays valid, in seconds. Challenges are single use and consumed on
 success. A short lifetime is recommended.
 
+### `session_lifetime`
+
+How long the **credential** (the binding) stays valid, in seconds, independently of the cookie.
+This is the durable, remember-me-like part: as long as the binding is valid, refreshes succeed and
+the user stays signed in even across cookie expiries and browser restarts. Once
+`createdAt + session_lifetime` is reached, the refresh endpoint terminates the session and the user
+must log in interactively again. `null` (default) never expires.
+
+Think of the two lifetimes as distinct knobs: `cookie.lifetime` (short, e.g. minutes) controls how
+often the browser refreshes; `session_lifetime` (long, e.g. 30 days) controls how long the login
+itself lasts.
+
+### `scope_exclude_paths`
+
+Paths kept out of the session scope, so requests to them never trigger a refresh. When the cookie
+expires, the browser performs one deferred refresh per concurrent in-scope request before sending
+it; on a page that loads many assets this produces a burst of refreshes. Excluding static-asset
+paths removes most of that churn:
+
+```yaml
+scope_exclude_paths: ['/assets', '/build', '/bundles']
+```
+
+The refresh endpoint's own path is always excluded by the browser, so you do not need to list it.
+
 ### `binding_repository` and `challenge_store`
 
 The service ids of your persistent stores for this firewall. Left at `null`, the bundle uses
@@ -94,9 +126,20 @@ development and tests only. See [Production storage](storage.md).
 
 ### `cookie`
 
-The attributes of the short-lived device-bound cookie. The `__Host-` prefix requires `secure:
-true`, `path: '/'` and no `domain`, which is the default and the recommended setting. `lifetime`
-controls how often the browser refreshes; a short value (a few minutes) is typical.
+The attributes of the short-lived device-bound cookie. `lifetime` controls how often the browser
+refreshes; a short value (a few minutes) is typical. Keep `secure: true`, `http_only: true` and an
+appropriate `same_site`.
+
+> **Do not use a cookie-prefix name.** A `__Host-` or `__Secure-` prefixed cookie is **rejected by
+> the browser as a DBSC bound credential** (registration silently fails and no session is
+> established). Use a plain name such as the default `dbsc_session`; the cookie is still `Secure`,
+> `HttpOnly` and `SameSite`, and DBSC adds the device binding on top.
+
+## Logout
+
+Logout cleanup is automatic: a per-firewall `LogoutEvent` listener deletes the binding (so the
+cookie can no longer be refreshed) and clears the bound cookie, exactly as Symfony's remember-me
+clears its persistent token and cookie. No application wiring is required.
 
 ## Multiple firewalls
 

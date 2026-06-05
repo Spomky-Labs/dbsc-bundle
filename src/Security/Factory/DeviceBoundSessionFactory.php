@@ -117,8 +117,10 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->addDefaultsIfNotSet()
             ->children()
             ->scalarNode('name')
-            ->info('Name of the short-lived device-bound cookie.')
-            ->defaultValue('__Host-Http-dbsc_session')
+            ->info(
+                'Name of the short-lived device-bound cookie. Do not use a __Host-/__Secure- prefix: browsers reject prefixed cookies as DBSC bound credentials.'
+            )
+            ->defaultValue('dbsc_session')
             ->end()
             ->integerNode('lifetime')
             ->info('Lifetime of the bound cookie, in seconds.')
