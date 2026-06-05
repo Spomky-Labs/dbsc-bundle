@@ -56,8 +56,9 @@ The two endpoints have opposite access requirements, so declare them explicitly:
 # config/packages/security.yaml
 security:
     access_control:
-        - { path: ^/dbsc/refresh, roles: PUBLIC_ACCESS }
-        - { path: ^/dbsc/register, roles: IS_AUTHENTICATED_FULLY }
+        # paths default to /dbsc/<firewall>/... — adjust to your firewall name or configured paths
+        - { path: ^/dbsc/main/refresh, roles: PUBLIC_ACCESS }
+        - { path: ^/dbsc/main/register, roles: IS_AUTHENTICATED_FULLY }
 ```
 
 `register` runs right after an interactive login and binds the current user, so it must require

@@ -11,7 +11,7 @@ When a login passport carries a `DeviceBoundSessionBadge` (see
 [Additive mode](additive-mode.md#opting-in-the-badge-and-its-conditions)), the bundle adds a header to the response:
 
 ```
-Secure-Session-Registration: (ES256 RS256);challenge="<value>";path="/dbsc/register"
+Secure-Session-Registration: (ES256 RS256);challenge="<value>";path="/dbsc/main/register"
 ```
 
 It lists the accepted algorithms, a single-use challenge and the registration path. The header is
@@ -22,7 +22,7 @@ ignores it.
 ## 2. Registration endpoint
 
 ```
-POST /dbsc/register
+POST /dbsc/main/register
 Secure-Session-Response: <JWS>
 ```
 
@@ -37,14 +37,14 @@ cookie token) and responds:
 
 ```
 HTTP/1.1 200 OK
-Set-Cookie: __Host-dbsc_session=<token>; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax
+Set-Cookie: __Host-Http-dbsc_session=<token>; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax
 
 {
   "session_identifier": "<opaque id>",
-  "refresh_url": "/dbsc/refresh",
+  "refresh_url": "/dbsc/main/refresh",
   "scope": { "origin": "https://example.com", "include_site": true, "scope_specification": [] },
   "credentials": [
-    { "type": "cookie", "name": "__Host-dbsc_session", "attributes": "Path=/; Secure; HttpOnly; SameSite=Lax" }
+    { "type": "cookie", "name": "__Host-Http-dbsc_session", "attributes": "Path=/; Secure; HttpOnly; SameSite=Lax" }
   ]
 }
 ```
@@ -57,7 +57,7 @@ steps: a challenge, then a signed proof.
 First request, without a proof:
 
 ```
-POST /dbsc/refresh
+POST /dbsc/main/refresh
 Sec-Secure-Session-Id: <session_identifier>
 ```
 
@@ -71,7 +71,7 @@ Secure-Session-Challenge: "<value>"
 Second request, with the signed challenge:
 
 ```
-POST /dbsc/refresh
+POST /dbsc/main/refresh
 Sec-Secure-Session-Id: <session_identifier>
 Secure-Session-Response: <JWS>
 ```

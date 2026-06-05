@@ -18,7 +18,7 @@ final class SessionConfigFactoryTest extends TestCase
     {
         // Given
         $factory = new SessionConfigFactory('/dbsc/refresh', [
-            'name' => '__Host-dbsc_session',
+            'name' => '__Host-Http-dbsc_session',
             'lifetime' => 600,
             'path' => '/',
             'domain' => null,
@@ -35,7 +35,7 @@ final class SessionConfigFactoryTest extends TestCase
         static::assertSame('/dbsc/refresh', $config['refresh_url']);
         static::assertSame('https://example.com', $config['scope']['origin']);
         static::assertTrue($config['scope']['include_site']);
-        static::assertSame('__Host-dbsc_session', $config['credentials'][0]['name']);
+        static::assertSame('__Host-Http-dbsc_session', $config['credentials'][0]['name']);
         static::assertStringContainsString('Secure', (string) $config['credentials'][0]['attributes']);
         static::assertStringContainsString('SameSite=Lax', (string) $config['credentials'][0]['attributes']);
     }

@@ -9,8 +9,8 @@ use PHPUnit\Framework\TestCase;
 use SpomkyLabs\DbscBundle\Challenge\ChallengeStore;
 use SpomkyLabs\DbscBundle\DataCollector\DbscDataCollector;
 use SpomkyLabs\DbscBundle\Http\SecureSessionHeaders;
-use SpomkyLabs\DbscBundle\Jwt\AlgorithmProviderInterface;
 use SpomkyLabs\DbscBundle\Session\SessionBindingRepository;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -20,17 +20,17 @@ use Symfony\Component\HttpFoundation\Response;
 final class DbscDataCollectorTest extends TestCase
 {
     #[Test]
-    public function itCollectsTheRegistrationHeaderAndBoundCookie(): void
+    public function itCollectsTheRegistrationHeaderAndPerFirewallBoundCookie(): void
     {
         // Given a response carrying the registration header and a request with the bound cookie
         $collector = $this->collector();
         $request = new Request([], [], [], [
-            '__Host-dbsc_session' => 'tok-abcdef123',
+            '__Host-Http-dbsc_session' => 'tok-abcdef123',
         ]);
         $response = new Response();
         $response->headers->set(
             SecureSessionHeaders::REGISTRATION,
-            '(ES256 RS256);challenge="chal-42";path="/dbsc/register"',
+            '(ES256 RS256);challenge="chal-42";path="/dbsc/main/register"',
         );
 
         // When
@@ -40,7 +40,8 @@ final class DbscDataCollectorTest extends TestCase
         static::assertTrue($collector->isRegistrationRequested());
         static::assertTrue($collector->isCookiePresent());
         static::assertSame('chal-42', $collector->getData()['challenge']);
-        static::assertSame(['ES256', 'RS256'], $collector->getData()['algorithms']);
+        static::assertSame(['ES256', 'RS256'], $collector->getData()['firewalls']['main']['algorithms']);
+        static::assertTrue($collector->getData()['firewalls']['main']['cookie_present']);
     }
 
     #[Test]
@@ -60,18 +61,23 @@ final class DbscDataCollectorTest extends TestCase
 
     private function collector(): DbscDataCollector
     {
-        $algorithms = static::createStub(AlgorithmProviderInterface::class);
-        $algorithms->method('getAllowedNames')
-            ->willReturn(['ES256', 'RS256']);
-
         return new DbscDataCollector(
-            $algorithms,
-            static::createStub(SessionBindingRepository::class),
-            static::createStub(ChallengeStore::class),
-            '__Host-dbsc_session',
-            '/dbsc/register',
-            '/dbsc/refresh',
-            300,
+            [
+                'main' => [
+                    'register' => '/dbsc/main/register',
+                    'refresh' => '/dbsc/main/refresh',
+                    'cookie_name' => '__Host-Http-dbsc_session',
+                    'algorithms' => ['ES256', 'RS256'],
+                    'challenge_ttl' => 300,
+                    'authenticate' => false,
+                ],
+            ],
+            new ServiceLocator([
+                'main' => fn (): SessionBindingRepository => static::createStub(SessionBindingRepository::class),
+            ]),
+            new ServiceLocator([
+                'main' => fn (): ChallengeStore => static::createStub(ChallengeStore::class),
+            ]),
         );
     }
 }

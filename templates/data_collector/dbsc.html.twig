@@ -18,8 +18,8 @@
             <span class="sf-toolbar-status sf-toolbar-status-{{ collector.cookiePresent ? 'green' : 'normal' }}">{{ collector.cookiePresent ? 'present' : 'absent' }}</span>
         </div>
         <div class="sf-toolbar-info-piece">
-            <b>Algorithms</b>
-            <span>{{ collector.data.algorithms|join(', ') }}</span>
+            <b>Firewalls</b>
+            <span>{{ collector.data.firewalls|keys|join(', ') ?: '(none)' }}</span>
         </div>
     {% endset %}
 
@@ -47,6 +47,10 @@
             <span class="value">{{ collector.cookiePresent ? 'Present' : 'Absent' }}</span>
             <span class="label">Device-bound cookie</span>
         </div>
+        <div class="metric">
+            <span class="value">{{ collector.data.firewalls|length }}</span>
+            <span class="label">Firewalls with DBSC</span>
+        </div>
     </div>
 
     <h3>This request</h3>
@@ -60,37 +64,43 @@
                 <th>Challenge</th>
                 <td>{{ collector.data.challenge ?? '(none)' }}</td>
             </tr>
-            <tr>
-                <th>Cookie ({{ collector.data.cookie_name }})</th>
-                <td>{{ collector.cookiePresent ? collector.data.cookie_preview : '(not sent)' }}</td>
-            </tr>
         </tbody>
     </table>
 
-    {% if collector.data.binding_jwk is not null %}
-        <h3>Device binding</h3>
-        <table>
-            <tbody>
-                <tr><th>Session identifier</th><td><code>{{ collector.data.binding_session_id }}</code></td></tr>
-                <tr><th>User</th><td>{{ collector.data.binding_user ?? '(none)' }}</td></tr>
-                <tr>
-                    <th>Public key (JWK)</th>
-                    <td><pre style="white-space: pre-wrap;">{{ collector.data.binding_jwk|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre></td>
-                </tr>
-            </tbody>
-        </table>
+    {% if collector.data.firewalls is empty %}
+        <p>No firewall enables <code>device_bound_session</code>.</p>
     {% endif %}
 
-    <h3>Configuration</h3>
-    <table>
-        <tbody>
-            <tr><th>Registration endpoint</th><td><code>{{ collector.data.registration_path }}</code></td></tr>
-            <tr><th>Refresh endpoint</th><td><code>{{ collector.data.refresh_path }}</code></td></tr>
-            <tr><th>Cookie name</th><td><code>{{ collector.data.cookie_name }}</code></td></tr>
-            <tr><th>Algorithms</th><td>{{ collector.data.algorithms|join(', ') }}</td></tr>
-            <tr><th>Challenge TTL</th><td>{{ collector.data.challenge_ttl }} s</td></tr>
-            <tr><th>Binding repository</th><td><code>{{ collector.data.binding_repository }}</code></td></tr>
-            <tr><th>Challenge store</th><td><code>{{ collector.data.challenge_store }}</code></td></tr>
-        </tbody>
-    </table>
+    {% for name, firewall in collector.data.firewalls %}
+        <h3>Firewall <code>{{ name }}</code></h3>
+        <table>
+            <tbody>
+                <tr>
+                    <th>Cookie ({{ firewall.cookie_name }})</th>
+                    <td>{{ firewall.cookie_present ? firewall.cookie_preview : '(not sent)' }}</td>
+                </tr>
+                <tr><th>Registration endpoint</th><td><code>{{ firewall.register_path }}</code></td></tr>
+                <tr><th>Refresh endpoint</th><td><code>{{ firewall.refresh_path }}</code></td></tr>
+                <tr><th>Algorithms</th><td>{{ firewall.algorithms|join(', ') }}</td></tr>
+                <tr><th>Challenge TTL</th><td>{{ firewall.challenge_ttl }} s</td></tr>
+                <tr><th>Mode</th><td>{{ firewall.authenticate ? 'full replacement (authenticate)' : 'additive' }}</td></tr>
+                <tr><th>Binding repository</th><td><code>{{ firewall.binding_repository ?? '(n/a)' }}</code></td></tr>
+                <tr><th>Challenge store</th><td><code>{{ firewall.challenge_store ?? '(n/a)' }}</code></td></tr>
+            </tbody>
+        </table>
+
+        {% if firewall.binding_jwk is not null %}
+            <h4>Device binding (this request)</h4>
+            <table>
+                <tbody>
+                    <tr><th>Session identifier</th><td><code>{{ firewall.binding_session_id }}</code></td></tr>
+                    <tr><th>User</th><td>{{ firewall.binding_user ?? '(none)' }}</td></tr>
+                    <tr>
+                        <th>Public key (JWK)</th>
+                        <td><pre style="white-space: pre-wrap;">{{ firewall.binding_jwk|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre></td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
+    {% endfor %}
 {% endblock %}

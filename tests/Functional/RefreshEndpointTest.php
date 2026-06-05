@@ -22,7 +22,7 @@ final class RefreshEndpointTest extends WebTestCase
         $client = self::createClient();
 
         // When
-        $client->request('POST', '/dbsc/refresh', [], [], [
+        $client->request('POST', '/dbsc/login/refresh', [], [], [
             'HTTP_' . str_replace('-', '_', strtoupper(SecureSessionHeaders::SESSION_ID)) => 'session-1',
         ]);
 
@@ -40,7 +40,7 @@ final class RefreshEndpointTest extends WebTestCase
         $client = self::createClient();
 
         // When
-        $client->request('POST', '/dbsc/refresh');
+        $client->request('POST', '/dbsc/login/refresh');
 
         // Then
         static::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
@@ -61,7 +61,7 @@ final class RefreshEndpointTest extends WebTestCase
 
     private function postProof(KernelBrowser $client, string $sessionId, string $proof): void
     {
-        $client->request('POST', '/dbsc/refresh', [], [], [
+        $client->request('POST', '/dbsc/login/refresh', [], [], [
             'HTTP_' . str_replace('-', '_', strtoupper(SecureSessionHeaders::SESSION_ID)) => $sessionId,
             'HTTP_' . str_replace('-', '_', strtoupper(SecureSessionHeaders::RESPONSE)) => $proof,
         ]);

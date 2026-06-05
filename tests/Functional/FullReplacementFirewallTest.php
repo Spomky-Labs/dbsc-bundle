@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class FullReplacementFirewallTest extends WebTestCase
 {
-    private const COOKIE = '__Host-dbsc_session';
+    private const COOKIE = '__Host-Http-dbsc_session';
 
     #[Test]
     public function itAuthenticatesAProtectedRequestFromTheBoundCookie(): void
@@ -86,7 +86,7 @@ final class FullReplacementFirewallTest extends WebTestCase
     private function seedBinding(string $cookieToken, string $userIdentifier): void
     {
         /** @var SessionBindingRepository $repository */
-        $repository = static::getContainer()->get(SessionBindingRepository::class);
+        $repository = static::getContainer()->get('dbsc.binding_repository.secured');
         $repository->save(new SessionBinding('sid-' . $cookieToken, [
             'kty' => 'EC',
         ], $userIdentifier, 1_000, $cookieToken));

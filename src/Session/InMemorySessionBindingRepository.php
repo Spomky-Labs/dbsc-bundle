@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SpomkyLabs\DbscBundle\Session;
 
 /**
- * Volatile binding store. Default implementation for dev/test; replace with a shared,
- * persistent store in production via `dbsc.binding_repository`.
+ * Volatile binding store. Per-firewall default for dev/test; replace with a shared,
+ * persistent store in production via the firewall's `binding_repository` option.
  */
 final class InMemorySessionBindingRepository implements SessionBindingRepository
 {

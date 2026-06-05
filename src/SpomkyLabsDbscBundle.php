@@ -6,11 +6,11 @@ namespace SpomkyLabs\DbscBundle;
 
 use function dirname;
 use SpomkyLabs\DbscBundle\Security\Factory\DeviceBoundSessionFactory;
-use SpomkyLabs\DbscBundle\Session\SessionBindingRepository;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
-use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 final class SpomkyLabsDbscBundle extends AbstractBundle
@@ -38,43 +38,27 @@ final class SpomkyLabsDbscBundle extends AbstractBundle
         }
     }
 
-    public function configure(DefinitionConfigurator $definition): void
-    {
-        $definition->import('../config/config.php');
-    }
-
     /**
+     * The bundle has no global configuration; everything is configured per firewall by
+     * {@see DeviceBoundSessionFactory}. This only loads the shared services and guarantees the
+     * cross-firewall plumbing exists even when no firewall enables DBSC.
+     *
      * @param array<array-key, mixed> $config
      */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $container->import('../config/services.php');
 
-        /** @var list<string> $algorithms */
-        $algorithms = $config['algorithms'];
-        $builder->setParameter('dbsc.algorithms', $algorithms);
+        if (! $builder->hasParameter('dbsc.firewalls')) {
+            $builder->setParameter('dbsc.firewalls', []);
+        }
 
-        /** @var string $registration */
-        $registration = $config['registration'];
-        $builder->setParameter('dbsc.registration.path', $registration);
-
-        /** @var string $refresh */
-        $refresh = $config['refresh'];
-        $builder->setParameter('dbsc.refresh.path', $refresh);
-
-        /** @var int $challengeTtl */
-        $challengeTtl = $config['challenge_ttl'];
-        $builder->setParameter('dbsc.challenge.ttl', $challengeTtl);
-
-        /** @var array{name: string} $cookie */
-        $cookie = $config['cookie'];
-        $builder->setParameter('dbsc.cookie', $cookie);
-        $builder->setParameter('dbsc.cookie.name', $cookie['name']);
-
-        /** @var string|null $bindingRepository */
-        $bindingRepository = $config['binding_repository'];
-        if ($bindingRepository !== null) {
-            $builder->setAlias(SessionBindingRepository::class, $bindingRepository);
+        foreach (['dbsc.firewall_repositories', 'dbsc.firewall_challenge_stores'] as $locatorId) {
+            if (! $builder->hasDefinition($locatorId)) {
+                $locator = new Definition(ServiceLocator::class, [[]]);
+                $locator->addTag('container.service_locator');
+                $builder->setDefinition($locatorId, $locator);
+            }
         }
     }
 }
