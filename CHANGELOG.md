@@ -23,6 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refresh challenge handshake: the challenge is now returned with `403` and the required `id` structured-field parameter (`"<challenge>";id="<session>"`). The previous `401` is a `4xx` that makes the browser terminate the session, so the handshake never completed.
 - The refresh endpoint now terminates the session with a `4xx` on an unknown or expired binding, instead of looping challenges.
 
+
+-----
+
+### Release Notes for [0.2.0](https://github.com/Spomky-Labs/dbsc-bundle/milestone/3)
+
+Feature release (minor)
+
+### 0.2.0
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **0**
+- Total contributors: **0**
+
 ## [0.1.0] - 2026-06-05
 
 ### Added
