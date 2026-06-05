@@ -16,7 +16,7 @@ final class SessionConfigFactoryTest extends TestCase
     #[Test]
     public function itBuildsTheSessionConfigDocument(): void
     {
-        // Given
+        // Given a factory excluding the static asset paths from the scope
         $factory = new SessionConfigFactory('/dbsc/refresh', [
             'name' => '__Host-Http-dbsc_session',
             'lifetime' => 600,
@@ -25,7 +25,7 @@ final class SessionConfigFactoryTest extends TestCase
             'secure' => true,
             'http_only' => true,
             'same_site' => 'lax',
-        ]);
+        ], ['/assets', '/build']);
 
         // When
         $config = $factory->create('session-1', 'https://example.com');
@@ -36,10 +36,22 @@ final class SessionConfigFactoryTest extends TestCase
         static::assertSame('https://example.com', $config['scope']['origin']);
         static::assertFalse($config['scope']['include_site']);
         static::assertSame([
-            'type' => 'include',
-            'domain' => 'example.com',
-            'path' => '/',
-        ], $config['scope']['scope_specification'][0]);
+            [
+                'type' => 'include',
+                'domain' => 'example.com',
+                'path' => '/',
+            ],
+            [
+                'type' => 'exclude',
+                'domain' => 'example.com',
+                'path' => '/assets',
+            ],
+            [
+                'type' => 'exclude',
+                'domain' => 'example.com',
+                'path' => '/build',
+            ],
+        ], $config['scope']['scope_specification']);
         static::assertSame('__Host-Http-dbsc_session', $config['credentials'][0]['name']);
         static::assertStringContainsString('Secure', (string) $config['credentials'][0]['attributes']);
         static::assertStringContainsString('SameSite=Lax', (string) $config['credentials'][0]['attributes']);

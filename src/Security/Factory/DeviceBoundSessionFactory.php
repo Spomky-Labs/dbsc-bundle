@@ -97,6 +97,14 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             )
             ->defaultNull()
             ->end()
+            ->arrayNode('scope_exclude_paths')
+            ->info(
+                'Paths kept out of the session scope (e.g. /assets, /build) so their requests never trigger a refresh.'
+            )
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue([])
+            ->end()
             ->scalarNode('register')
             ->info('Path of the registration endpoint. Null derives /dbsc/<firewall>/register.')
             ->defaultNull()
@@ -157,6 +165,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $challengeTtl = $config['challenge_ttl'];
         /** @var int|null $sessionLifetime */
         $sessionLifetime = $config['session_lifetime'];
+        /** @var list<string> $excludePaths */
+        $excludePaths = $config['scope_exclude_paths'];
         /** @var string|null $bindingRepository */
         $bindingRepository = $config['binding_repository'];
         /** @var string|null $challengeStore */
@@ -199,7 +209,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $sessionConfigId = 'dbsc.session_config_factory.' . $firewallName;
         $container->setDefinition($sessionConfigId, new ChildDefinition('dbsc.session_config_factory'))
             ->replaceArgument(0, $refreshPath)
-            ->replaceArgument(1, $cookie);
+            ->replaceArgument(1, $cookie)
+            ->replaceArgument(2, $excludePaths);
 
         $registrationHandlerId = 'dbsc.registration_handler.' . $firewallName;
         $container->setDefinition($registrationHandlerId, new ChildDefinition('dbsc.registration_handler'))

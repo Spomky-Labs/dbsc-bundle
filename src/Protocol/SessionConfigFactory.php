@@ -17,10 +17,13 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
 {
     /**
      * @param array{name: string, path: string, domain: ?string, secure: bool, http_only: bool, same_site: string, lifetime: int} $cookie
+     * @param list<string> $excludePaths paths kept out of the session scope (e.g. static assets) so
+     *                                    their requests never trigger a refresh
      */
     public function __construct(
         private string $refreshPath,
         private array $cookie,
+        private array $excludePaths = [],
     ) {
     }
 
@@ -29,7 +32,23 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
      */
     public function create(string $sessionIdentifier, string $origin): array
     {
-        $host = parse_url($origin, PHP_URL_HOST);
+        $parsedHost = parse_url($origin, PHP_URL_HOST);
+        $host = is_string($parsedHost) ? $parsedHost : '';
+
+        $scopeSpecification = [
+            [
+                'type' => 'include',
+                'domain' => $host,
+                'path' => '/',
+            ],
+        ];
+        foreach ($this->excludePaths as $path) {
+            $scopeSpecification[] = [
+                'type' => 'exclude',
+                'domain' => $host,
+                'path' => $path,
+            ];
+        }
 
         return [
             'session_identifier' => $sessionIdentifier,
@@ -37,13 +56,7 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
             'scope' => [
                 'origin' => $origin,
                 'include_site' => false,
-                'scope_specification' => [
-                    [
-                        'type' => 'include',
-                        'domain' => is_string($host) ? $host : '',
-                        'path' => '/',
-                    ],
-                ],
+                'scope_specification' => $scopeSpecification,
             ],
             'credentials' => [
                 [
