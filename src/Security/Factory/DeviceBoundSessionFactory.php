@@ -13,6 +13,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
+use Symfony\Component\Security\Http\Event\LogoutEvent;
 
 /**
  * Wires Device Bound Session Credentials on a firewall.
@@ -250,6 +251,16 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
                 'event' => LoginSuccessEvent::class,
                 'method' => 'onLoginSuccess',
                 'priority' => -64,
+                'dispatcher' => $dispatcher,
+            ]);
+
+        $logoutId = 'dbsc.security.logout_listener.' . $firewallName;
+        $container->setDefinition($logoutId, new ChildDefinition('dbsc.security.logout_listener'))
+            ->replaceArgument(0, new Reference($repositoryId))
+            ->replaceArgument(1, new Reference($cookieFactoryId))
+            ->addTag('kernel.event_listener', [
+                'event' => LogoutEvent::class,
+                'method' => 'onLogout',
                 'dispatcher' => $dispatcher,
             ]);
 

@@ -18,6 +18,7 @@ use SpomkyLabs\DbscBundle\Controller\RefreshController;
 use SpomkyLabs\DbscBundle\Controller\RegistrationController;
 use SpomkyLabs\DbscBundle\DataCollector\DbscDataCollector;
 use SpomkyLabs\DbscBundle\EventListener\DeviceBoundSessionConditionsListener;
+use SpomkyLabs\DbscBundle\EventListener\DeviceBoundSessionLogoutListener;
 use SpomkyLabs\DbscBundle\EventListener\RegistrationHeaderListener;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactory;
 use SpomkyLabs\DbscBundle\Jwt\AlgorithmProvider;
@@ -152,6 +153,13 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('challenge manager, set by the security factory'),
             abstract_arg('algorithm provider, set by the security factory'),
             abstract_arg('registration path, set by the security factory'),
+        ]);
+
+    $services->set('dbsc.security.logout_listener', DeviceBoundSessionLogoutListener::class)
+        ->abstract()
+        ->args([
+            abstract_arg('binding repository, set by the security factory'),
+            abstract_arg('bound cookie factory, set by the security factory'),
         ]);
 
     $services->set('dbsc.security.authenticator', DeviceBoundSessionAuthenticator::class)
