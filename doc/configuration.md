@@ -13,34 +13,34 @@ security:
     firewalls:
         main:
             device_bound_session:
-                # — when to request registration at login —
+                # When to request registration at login
                 # Always request registration at login (ignores the checkbox).
                 always: false
                 # Request parameter (checkbox input name) that opts in when "always" is false.
                 checkbox: _device_bound_session
 
-                # — adoption mode —
+                # Adoption mode
                 # Authenticate requests from the bound cookie (remember-me replacement).
                 # false keeps the additive mode (the session stays authoritative).
                 authenticate: false
 
-                # — endpoints —
+                # Endpoints
                 # Paths of the two endpoints. null derives /dbsc/<firewall>/{register,refresh}.
                 register: null
                 refresh: null
 
-                # — protocol —
+                # Protocol
                 # Accepted JWS signature algorithms for the device-bound key.
                 # DBSC mandates ES256 and RS256; only algorithms registered as services are usable.
                 algorithms: ['ES256', 'RS256']
                 # Lifetime of a single-use challenge, in seconds.
                 challenge_ttl: 300
 
-                # — storage (null = per-firewall in-memory, dev/test only) —
+                # Storage (null = per-firewall in-memory, dev/test only)
                 binding_repository: null
                 challenge_store: null
 
-                # — bound cookie —
+                # Bound cookie
                 cookie:
                     name: '__Host-Http-dbsc_session'
                     lifetime: 600
@@ -89,7 +89,7 @@ success. A short lifetime is recommended.
 ### `binding_repository` and `challenge_store`
 
 The service ids of your persistent stores for this firewall. Left at `null`, the bundle uses
-in-memory stores that are wiped on every process and not shared between nodes — fine for
+in-memory stores that are wiped on every process and not shared between nodes, fine for
 development and tests only. See [Production storage](storage.md).
 
 ### `cookie`
@@ -101,6 +101,6 @@ controls how often the browser refreshes; a short value (a few minutes) is typic
 ## Multiple firewalls
 
 Because configuration is per firewall, each firewall gets its own isolated graph: its own cookie,
-endpoints, algorithms and stores. Two firewalls can run DBSC in different modes side by side — for
-example an additive `main` firewall and a full-replacement `api` firewall — without sharing any
+endpoints, algorithms and stores. Two firewalls can run DBSC in different modes side by side, for
+example an additive `main` firewall and a full-replacement `api` firewall, without sharing any
 state.

@@ -11,7 +11,7 @@ use Symfony\Component\Routing\RouteCollection;
 /**
  * Emits the DBSC registration and refresh routes, one pair per firewall that enables
  * `device_bound_session`. Each route targets that firewall's dedicated controller service,
- * so the incoming request alone determines which firewall configuration applies — no runtime
+ * so the incoming request alone determines which firewall configuration applies, with no runtime
  * firewall resolution is needed.
  *
  * The firewalls map is populated by {@see \SpomkyLabs\DbscBundle\Security\Factory\DeviceBoundSessionFactory}

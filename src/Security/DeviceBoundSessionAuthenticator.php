@@ -24,7 +24,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPasspor
  * the next token.
  *
  * This is agnostic to how the user originally logged in: the binding stores the user
- * identifier captured at registration (set by whatever authenticator handled the login —
+ * identifier captured at registration (set by whatever authenticator handled the login:
  * password, WebAuthn, SSO…), and the user is reloaded from the firewall's user provider.
  */
 final class DeviceBoundSessionAuthenticator extends AbstractAuthenticator

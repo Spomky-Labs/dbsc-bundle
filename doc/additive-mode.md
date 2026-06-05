@@ -56,7 +56,7 @@ The two endpoints have opposite access requirements, so declare them explicitly:
 # config/packages/security.yaml
 security:
     access_control:
-        # paths default to /dbsc/<firewall>/... — adjust to your firewall name or configured paths
+        # paths default to /dbsc/<firewall>/...; adjust to your firewall name or configured paths
         - { path: ^/dbsc/main/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/dbsc/main/register, roles: IS_AUTHENTICATED_FULLY }
 ```

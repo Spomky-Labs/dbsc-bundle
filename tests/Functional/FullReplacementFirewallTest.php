@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Exercises the full-replacement mode: a firewall configured with `device_bound_session`
- * authenticates the request from the device-bound cookie alone — no session cookie.
+ * authenticates the request from the device-bound cookie alone, with no session cookie.
  *
  * @internal
  */

@@ -29,7 +29,7 @@ return [
 
 ## Routes
 
-The bundle generates the registration and refresh routes — one pair per firewall that enables
+The bundle generates the registration and refresh routes, one pair per firewall that enables
 DBSC. Import the loader once:
 
 ```yaml

@@ -12,7 +12,7 @@ Even if a session or remember-me cookie is stolen, it stops working on the thief
 
 The browser does all the cryptography. Your app just enables the feature on a firewall; the bundle
 emits one header at login and answers two endpoints. Browsers that do not support DBSC ignore it
-and keep working exactly as before — adopting the bundle is risk-free.
+and keep working exactly as before; adopting the bundle is risk-free.
 
 ## Quick start
 
@@ -46,7 +46,7 @@ security:
         - { path: ^/dbsc/main/register, roles: IS_AUTHENTICATED_FULLY }
 ```
 
-**4. Request registration at login** by adding a badge to your authenticator's passport — exactly
+**4. Request registration at login** by adding a badge to your authenticator's passport, exactly
 like remember-me:
 
 ```php
