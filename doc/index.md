@@ -1,32 +1,78 @@
-# DBSC Bundle documentation
+# DBSC Bundle
 
-Device Bound Session Credentials (DBSC) for Symfony. These pages cover the concepts, the
-configuration and the two ways to adopt the bundle.
+Protect Symfony sessions from cookie theft by binding them to a key held in the device hardware.
+Even if a session or remember-me cookie is stolen, it stops working on the thief's machine.
 
-## Contents
+## How it works, in short
 
-1. [Concepts and security model](concepts.md)
-   What DBSC is, how the protocol flows, what it protects, and the state of browser support.
-2. [Installation](installation.md)
-   Requirements, Composer, and bundle registration.
-3. [Configuration reference](configuration.md)
-   Every option under the `dbsc` key, with defaults.
-4. [Adoption modes](modes.md)
-   How to choose between the two modes below.
-   - [Additive mode](additive-mode.md): the device-bound cookie sits alongside your session.
-   - [Device-bound long-lived credential](replacement-mode.md): the remember-me replacement.
-5. [Protocol and endpoints](protocol.md)
-   The registration header, the two endpoints, the headers and the JSON payloads.
-6. [Production storage](storage.md)
-   Replacing the in-memory stores with shared, persistent ones for multi-node deployments.
-7. [Extending the bundle](extending.md)
-   The interfaces you can implement to customise behaviour.
+- At login, the bundle asks a supporting browser to create a device-bound key (kept in the TPM).
+- The browser proves it holds that key to get a short-lived cookie, and re-proves it on every
+  refresh.
+- A copied cookie cannot be refreshed from another device, so it stops working within minutes.
 
-## In one paragraph
+The browser does all the cryptography. Your app just enables the feature on a firewall; the bundle
+emits one header at login and answers two endpoints. Browsers that do not support DBSC ignore it
+and keep working exactly as before — adopting the bundle is risk-free.
 
-DBSC binds an authenticated browser session to a private key stored in the device hardware
-(a TPM when available). The browser proves possession of that key when it registers, and again
-each time the short-lived cookie is refreshed. An attacker who copies the cookie to another
-machine cannot reproduce the proof, so the stolen cookie stops working at the next refresh. The
-browser performs all the cryptography; the server only emits a header at login and answers two
-endpoints, both provided by this bundle.
+## Quick start
+
+The no-fuss setup: **additive mode**, a device-bound cookie issued alongside your normal session,
+which stays in charge. Nothing about how users are authenticated changes.
+
+**1. Install** (Symfony Flex registers the bundle automatically):
+
+```bash
+composer require spomky-labs/dbsc-bundle
+```
+
+**2. Import the routes:**
+
+```yaml
+# config/routes/dbsc.yaml
+dbsc:
+    resource: '@SpomkyLabsDbscBundle/config/routes.php'
+```
+
+**3. Enable it on your firewall and open its two endpoints:**
+
+```yaml
+# config/packages/security.yaml
+security:
+    firewalls:
+        main:
+            device_bound_session: true
+    access_control:
+        - { path: ^/dbsc/main/refresh, roles: PUBLIC_ACCESS }
+        - { path: ^/dbsc/main/register, roles: IS_AUTHENTICATED_FULLY }
+```
+
+**4. Request registration at login** by adding a badge to your authenticator's passport — exactly
+like remember-me:
+
+```php
+use SpomkyLabs\DbscBundle\Security\DeviceBoundSessionBadge;
+
+return new SelfValidatingPassport(
+    new UserBadge($userIdentifier),
+    [new DeviceBoundSessionBadge()],
+);
+```
+
+That's the whole base setup. A supporting browser now registers a device-bound cookie when the user
+opts in with a `_device_bound_session` checkbox at login. [Additive mode](additive-mode.md) explains
+the badge, the checkbox and the `always` option.
+
+## Going further
+
+Each topic has its own page; pick what you need.
+
+| You want to… | Read |
+| --- | --- |
+| Understand what DBSC is and what it protects | [Concepts & security model](concepts.md) |
+| Check requirements and registration | [Installation](installation.md) |
+| Start safely (cookie alongside your session) | [Additive mode](additive-mode.md) |
+| Replace remember-me with a device-bound credential | [Long-lived credential](replacement-mode.md) |
+| Tune cookies, algorithms, endpoints or stores | [Configuration reference](configuration.md) |
+| Go to production (shared, persistent stores) | [Production storage](storage.md) |
+| Customise internals or accept another algorithm | [Extending the bundle](extending.md) |
+| Inspect the wire protocol | [Protocol & endpoints](protocol.md) |

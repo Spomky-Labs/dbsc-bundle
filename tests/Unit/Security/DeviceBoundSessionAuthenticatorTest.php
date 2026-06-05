@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
  */
 final class DeviceBoundSessionAuthenticatorTest extends TestCase
 {
-    private const COOKIE = '__Host-dbsc_session';
+    private const COOKIE = '__Host-Http-dbsc_session';
 
     #[Test]
     public function itSupportsRequestsCarryingTheBoundCookie(): void

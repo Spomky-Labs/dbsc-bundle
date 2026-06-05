@@ -9,17 +9,25 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
 /**
  * Wires Device Bound Session Credentials on a firewall.
  *
- * It always registers, on the firewall's event dispatcher, the conditions listener (which
- * enables the badge either always or from a checkbox parameter) and the registration-header
- * listener. When `authenticate` is true it additionally registers the device-bound
- * authenticator, turning the bound cookie into the long-lived credential (remember-me
- * replacement); otherwise the firewall keeps authenticating as before (additive mode).
+ * All configuration is per firewall: the factory builds a self-contained graph of
+ * firewall-scoped services (algorithm provider, proof verifier, challenge store/manager,
+ * binding repository, cookie factory, handlers and controllers) from the abstract templates
+ * in config/services.php, and records the firewall in the `dbsc.firewalls` parameter so the
+ * route loader and the profiler collector can pick it up.
+ *
+ * It always registers the conditions listener (which enables the badge either always or from a
+ * checkbox parameter) and the registration-header listener on the firewall's dispatcher. When
+ * `authenticate` is true it additionally registers the device-bound authenticator, turning the
+ * bound cookie into the long-lived credential (remember-me replacement); otherwise the firewall
+ * keeps authenticating as before (additive mode).
  */
 final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
 {
@@ -64,9 +72,60 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             )
             ->defaultFalse()
             ->end()
-            ->scalarNode('cookie_name')
-            ->info('Override the bound-cookie name for this firewall. Defaults to dbsc.cookie.name.')
+            ->arrayNode('algorithms')
+            ->info('Accepted JWS signature algorithms for the device-bound key. DBSC mandates ES256 and RS256.')
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue(['ES256', 'RS256'])
+            ->end()
+            ->scalarNode('binding_repository')
+            ->info('Service id of a persistent SessionBindingRepository. Null keeps a per-firewall in-memory store.')
             ->defaultNull()
+            ->end()
+            ->scalarNode('challenge_store')
+            ->info('Service id of a persistent ChallengeStore. Null keeps a per-firewall in-memory store.')
+            ->defaultNull()
+            ->end()
+            ->integerNode('challenge_ttl')
+            ->info('Lifetime of a single-use challenge, in seconds.')
+            ->defaultValue(300)
+            ->end()
+            ->scalarNode('register')
+            ->info('Path of the registration endpoint. Null derives /dbsc/<firewall>/register.')
+            ->defaultNull()
+            ->end()
+            ->scalarNode('refresh')
+            ->info('Path of the refresh endpoint. Null derives /dbsc/<firewall>/refresh.')
+            ->defaultNull()
+            ->end()
+            ->arrayNode('cookie')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->scalarNode('name')
+            ->info('Name of the short-lived device-bound cookie.')
+            ->defaultValue('__Host-Http-dbsc_session')
+            ->end()
+            ->integerNode('lifetime')
+            ->info('Lifetime of the bound cookie, in seconds.')
+            ->defaultValue(600)
+            ->end()
+            ->scalarNode('path')
+            ->defaultValue('/')
+            ->end()
+            ->scalarNode('domain')
+            ->defaultNull()
+            ->end()
+            ->booleanNode('secure')
+            ->defaultTrue()
+            ->end()
+            ->booleanNode('http_only')
+            ->defaultTrue()
+            ->end()
+            ->enumNode('same_site')
+            ->values(['lax', 'strict', 'none'])
+            ->defaultValue('lax')
+            ->end()
+            ->end()
             ->end()
             ->end()
         ;
@@ -83,9 +142,86 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         array $config,
         string $userProviderId
     ): string|array {
+        /** @var list<string> $algorithms */
+        $algorithms = $config['algorithms'];
+        /** @var array{name: string} $cookie */
+        $cookie = $config['cookie'];
+        /** @var int $challengeTtl */
+        $challengeTtl = $config['challenge_ttl'];
+        /** @var string|null $bindingRepository */
+        $bindingRepository = $config['binding_repository'];
+        /** @var string|null $challengeStore */
+        $challengeStore = $config['challenge_store'];
+
+        $registerPath = $config['register'] ?? '/dbsc/' . $firewallName . '/register';
+        $refreshPath = $config['refresh'] ?? '/dbsc/' . $firewallName . '/refresh';
+
+        $algorithmProviderId = 'dbsc.algorithm_provider.' . $firewallName;
+        $container->setDefinition($algorithmProviderId, new ChildDefinition('dbsc.algorithm_provider'))
+            ->replaceArgument(1, $algorithms);
+
+        $verifierId = 'dbsc.device_proof_verifier.' . $firewallName;
+        $container->setDefinition($verifierId, new ChildDefinition('dbsc.device_proof_verifier'))
+            ->replaceArgument(0, new Reference($algorithmProviderId));
+
+        $challengeStoreId = 'dbsc.challenge_store.' . $firewallName;
+        if ($challengeStore !== null) {
+            $container->setAlias($challengeStoreId, $challengeStore);
+        } else {
+            $container->setDefinition($challengeStoreId, new ChildDefinition('dbsc.challenge_store'));
+        }
+
+        $challengeManagerId = 'dbsc.challenge_manager.' . $firewallName;
+        $container->setDefinition($challengeManagerId, new ChildDefinition('dbsc.challenge_manager'))
+            ->replaceArgument(0, new Reference($challengeStoreId))
+            ->replaceArgument(2, $challengeTtl);
+
+        $repositoryId = 'dbsc.binding_repository.' . $firewallName;
+        if ($bindingRepository !== null) {
+            $container->setAlias($repositoryId, $bindingRepository);
+        } else {
+            $container->setDefinition($repositoryId, new ChildDefinition('dbsc.binding_repository'));
+        }
+
+        $cookieFactoryId = 'dbsc.bound_cookie_factory.' . $firewallName;
+        $container->setDefinition($cookieFactoryId, new ChildDefinition('dbsc.bound_cookie_factory'))
+            ->replaceArgument(0, $cookie);
+
+        $sessionConfigId = 'dbsc.session_config_factory.' . $firewallName;
+        $container->setDefinition($sessionConfigId, new ChildDefinition('dbsc.session_config_factory'))
+            ->replaceArgument(0, $refreshPath)
+            ->replaceArgument(1, $cookie);
+
+        $registrationHandlerId = 'dbsc.registration_handler.' . $firewallName;
+        $container->setDefinition($registrationHandlerId, new ChildDefinition('dbsc.registration_handler'))
+            ->replaceArgument(0, new Reference($verifierId))
+            ->replaceArgument(1, new Reference($challengeManagerId))
+            ->replaceArgument(2, new Reference($repositoryId))
+            ->replaceArgument(3, new Reference($sessionConfigId));
+
+        $refreshHandlerId = 'dbsc.refresh_handler.' . $firewallName;
+        $container->setDefinition($refreshHandlerId, new ChildDefinition('dbsc.refresh_handler'))
+            ->replaceArgument(0, new Reference($verifierId))
+            ->replaceArgument(1, new Reference($challengeManagerId))
+            ->replaceArgument(2, new Reference($repositoryId))
+            ->replaceArgument(3, new Reference($sessionConfigId));
+
+        $registrationControllerId = 'dbsc.registration_controller.' . $firewallName;
+        $container->setDefinition($registrationControllerId, new ChildDefinition('dbsc.registration_controller'))
+            ->replaceArgument(0, new Reference($registrationHandlerId))
+            ->replaceArgument(1, new Reference($cookieFactoryId))
+            ->addTag('controller.service_arguments');
+
+        $refreshControllerId = 'dbsc.refresh_controller.' . $firewallName;
+        $container->setDefinition($refreshControllerId, new ChildDefinition('dbsc.refresh_controller'))
+            ->replaceArgument(0, new Reference($refreshHandlerId))
+            ->replaceArgument(1, new Reference($challengeManagerId))
+            ->replaceArgument(2, new Reference($cookieFactoryId))
+            ->addTag('controller.service_arguments');
+
         $dispatcher = 'security.event_dispatcher.' . $firewallName;
 
-        $conditionsId = 'security.listener.device_bound_session_conditions.' . $firewallName;
+        $conditionsId = 'dbsc.security.conditions_listener.' . $firewallName;
         $container->setDefinition($conditionsId, new ChildDefinition('dbsc.security.conditions_listener'))
             ->replaceArgument(0, $config['always'])
             ->replaceArgument(1, $config['checkbox'])
@@ -96,8 +232,11 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
                 'dispatcher' => $dispatcher,
             ]);
 
-        $headerId = 'security.listener.device_bound_session_header.' . $firewallName;
+        $headerId = 'dbsc.security.header_listener.' . $firewallName;
         $container->setDefinition($headerId, new ChildDefinition('dbsc.security.header_listener'))
+            ->replaceArgument(0, new Reference($challengeManagerId))
+            ->replaceArgument(1, new Reference($algorithmProviderId))
+            ->replaceArgument(2, $registerPath)
             ->addTag('kernel.event_listener', [
                 'event' => LoginSuccessEvent::class,
                 'method' => 'onLoginSuccess',
@@ -105,18 +244,58 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
                 'dispatcher' => $dispatcher,
             ]);
 
+        $this->registerInLocator($container, 'dbsc.firewall_repositories', $firewallName, $repositoryId);
+        $this->registerInLocator($container, 'dbsc.firewall_challenge_stores', $firewallName, $challengeStoreId);
+
+        /** @var array<string, mixed> $firewalls */
+        $firewalls = $container->hasParameter('dbsc.firewalls') ? $container->getParameter('dbsc.firewalls') : [];
+        $firewalls[$firewallName] = [
+            'register' => $registerPath,
+            'refresh' => $refreshPath,
+            'registration_controller' => $registrationControllerId,
+            'refresh_controller' => $refreshControllerId,
+            'cookie_name' => $cookie['name'],
+            'algorithms' => $algorithms,
+            'challenge_ttl' => $challengeTtl,
+            'authenticate' => $config['authenticate'] === true,
+        ];
+        $container->setParameter('dbsc.firewalls', $firewalls);
+
         if ($config['authenticate'] !== true) {
             return [];
         }
 
-        $authenticatorId = 'security.authenticator.device_bound_session.' . $firewallName;
-        $definition = new ChildDefinition('dbsc.security.authenticator');
-        $definition->replaceArgument(1, new Reference($userProviderId));
-        if (($config['cookie_name'] ?? null) !== null) {
-            $definition->replaceArgument(2, $config['cookie_name']);
-        }
-        $container->setDefinition($authenticatorId, $definition);
+        $authenticatorId = 'dbsc.security.authenticator.' . $firewallName;
+        $container->setDefinition($authenticatorId, new ChildDefinition('dbsc.security.authenticator'))
+            ->replaceArgument(0, new Reference($repositoryId))
+            ->replaceArgument(1, new Reference($userProviderId))
+            ->replaceArgument(2, $cookie['name']);
 
         return $authenticatorId;
+    }
+
+    /**
+     * Appends a firewall-scoped service to a service locator (keyed by firewall name), creating
+     * the locator on the first firewall. Consumed by the profiler data collector.
+     */
+    private function registerInLocator(
+        ContainerBuilder $container,
+        string $locatorId,
+        string $firewallName,
+        string $serviceId
+    ): void {
+        if ($container->hasDefinition($locatorId)) {
+            $locator = $container->getDefinition($locatorId);
+            /** @var array<string, Reference> $map */
+            $map = $locator->getArgument(0);
+        } else {
+            $locator = new Definition(ServiceLocator::class, [[]]);
+            $locator->addTag('container.service_locator');
+            $container->setDefinition($locatorId, $locator);
+            $map = [];
+        }
+
+        $map[$firewallName] = new Reference($serviceId);
+        $locator->replaceArgument(0, $map);
     }
 }

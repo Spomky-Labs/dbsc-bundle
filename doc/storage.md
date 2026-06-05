@@ -28,12 +28,16 @@ interface SessionBindingRepository
 ```
 
 `findByCookieToken` is on the hot path in the device-bound credential mode (it runs on every
-authenticated request), so index the cookie-token column. Wire your implementation:
+authenticated request), so index the cookie-token column. Register your implementation as a service
+and reference it per firewall:
 
 ```yaml
-# config/packages/dbsc.yaml
-dbsc:
-    binding_repository: App\Security\Dbsc\DoctrineSessionBindingRepository
+# config/packages/security.yaml
+security:
+    firewalls:
+        main:
+            device_bound_session:
+                binding_repository: App\Security\Dbsc\DoctrineSessionBindingRepository
 ```
 
 A Doctrine implementation typically maps a small entity (session identifier as primary key, the
@@ -58,14 +62,21 @@ interface ChallengeStore
 
 A cache pool (`Psr\Cache` or a Symfony cache adapter) backed by a shared store such as Redis is a
 natural fit, with the challenge TTL as the cache item lifetime. Register your store as a service
-and alias the interface to it:
+and reference it per firewall:
 
 ```yaml
 # config/services.yaml
 services:
     App\Security\Dbsc\CacheChallengeStore: ~
-    SpomkyLabs\DbscBundle\Challenge\ChallengeStore:
-        alias: App\Security\Dbsc\CacheChallengeStore
+```
+
+```yaml
+# config/packages/security.yaml
+security:
+    firewalls:
+        main:
+            device_bound_session:
+                challenge_store: App\Security\Dbsc\CacheChallengeStore
 ```
 
 ## Why sharing matters

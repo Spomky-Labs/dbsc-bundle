@@ -85,13 +85,4 @@ return static function (ContainerConfigurator $container): void {
             ],
         ],
     ]);
-
-    $container->extension('dbsc', [
-        'algorithms' => ['ES256', 'RS256'],
-        'challenge_ttl' => 300,
-        'cookie' => [
-            'name' => '__Host-dbsc_session',
-            'lifetime' => 600,
-        ],
-    ]);
 };

@@ -18,6 +18,7 @@ deptrac:
               - { type: classLike, value: '^Symfony\\Component\\Routing' }
               - { type: classLike, value: '^Symfony\\Component\\Security' }
               - { type: classLike, value: '^Psr\\Clock' }
+              - { type: classLike, value: '^Psr\\Container' }
               - { type: classLike, value: '^Psr\\Log' }
     ruleset:
         library:

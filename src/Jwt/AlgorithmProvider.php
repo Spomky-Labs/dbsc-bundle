@@ -13,7 +13,7 @@ use SpomkyLabs\DbscBundle\Exception\InvalidProofException;
  * (tagged `dbsc.jose_algorithm`), restricted to the configured allow-list.
  *
  * Algorithms are discovered dynamically: any tagged {@see Algorithm} service becomes
- * available, and the `dbsc.algorithms` configuration selects which ones are accepted.
+ * available, and the per-firewall `algorithms` configuration selects which ones are accepted.
  * DBSC mandates ES256 and RS256.
  */
 final class AlgorithmProvider implements AlgorithmProviderInterface

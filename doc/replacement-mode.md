@@ -23,21 +23,20 @@ security:
 
 That is the only change: the binding store already carries the user identifier and the rotating
 cookie token from the additive phase, so there is no data migration. See the
-[configuration reference](configuration.md#per-firewall-option) for every option.
+[configuration reference](configuration.md) for every option.
 
 ## Recommended layering
 
-The idiomatic Symfony layering separates two responsibilities that a long-lived session cookie
-otherwise conflates:
+Split the job a long-lived session cookie usually does on its own into three clear layers:
 
-1. interactive login (password, WebAuthn, SSO) establishes the identity;
-2. a **short** session cookie bridges the active browsing session;
-3. DBSC is the device-bound replacement for remember-me, the long-lived credential that
-   re-authenticates once the session has expired.
+1. **Interactive login** (password, WebAuthn, SSO) establishes who the user is.
+2. A **short session cookie** covers the active browsing session.
+3. **DBSC** is the device-bound replacement for remember-me: the long-lived credential that
+   re-authenticates the user once the short session has expired.
 
-A session-cookie application (one with a long session and no remember-me, where the session
-cookie itself carries the durable authentication) graduates by shortening the session and letting
-DBSC carry the durable part. The firewall and the user provider stay as they are.
+If your app currently relies on a long session cookie (long session, no remember-me), you move to
+this layering by shortening the session and letting DBSC carry the durable part. Your firewall and
+user provider stay exactly as they are.
 
 ## Authentication level
 

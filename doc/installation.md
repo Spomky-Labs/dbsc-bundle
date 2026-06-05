@@ -29,7 +29,8 @@ return [
 
 ## Routes
 
-The bundle ships the registration and refresh routes. Import them once:
+The bundle generates the registration and refresh routes — one pair per firewall that enables
+DBSC. Import the loader once:
 
 ```yaml
 # config/routes/dbsc.yaml
@@ -37,11 +38,15 @@ dbsc:
     resource: '@SpomkyLabsDbscBundle/config/routes.php'
 ```
 
-The two routes resolve to the configured paths, `/dbsc/register` and `/dbsc/refresh` by default.
+For a firewall named `main` this yields `/dbsc/main/register` and `/dbsc/main/refresh` by default;
+override the paths per firewall with the `register` / `refresh` options. The routes appear only
+once a firewall opts in (see below), so importing the resource on a project with no DBSC firewall
+is harmless.
 
 ## Next steps
 
-- Nothing else is required for [additive mode](additive-mode.md).
+- Enable DBSC on a firewall with `device_bound_session: true`. Nothing else is required for
+  [additive mode](additive-mode.md).
 - Review the [configuration reference](configuration.md) to tune cookie attributes, the
   accepted algorithms or the challenge lifetime.
 - Before production, replace the default in-memory stores with shared ones: see

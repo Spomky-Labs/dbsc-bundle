@@ -23,7 +23,7 @@ final class BoundCookieFactoryTest extends TestCase
         $cookie = $factory->create('grant-value', 1_000);
 
         // Then
-        static::assertSame('__Host-dbsc_session', $cookie->getName());
+        static::assertSame('__Host-Http-dbsc_session', $cookie->getName());
         static::assertSame('grant-value', $cookie->getValue());
         static::assertSame(1_600, $cookie->getExpiresTime());
         static::assertTrue($cookie->isSecure());
@@ -41,14 +41,14 @@ final class BoundCookieFactoryTest extends TestCase
         $cookie = $factory->clear();
 
         // Then
-        static::assertSame('__Host-dbsc_session', $cookie->getName());
+        static::assertSame('__Host-Http-dbsc_session', $cookie->getName());
         static::assertTrue($cookie->isCleared() || $cookie->getValue() === '');
     }
 
     private function createFactory(): BoundCookieFactory
     {
         return new BoundCookieFactory([
-            'name' => '__Host-dbsc_session',
+            'name' => '__Host-Http-dbsc_session',
             'lifetime' => 600,
             'path' => '/',
             'domain' => null,
