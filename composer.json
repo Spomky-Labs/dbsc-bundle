@@ -58,6 +58,9 @@
         "sort-packages": true
     },
     "extra": {
+        "branch-alias": {
+            "dev-0.1.x": "0.1.x-dev"
+        },
         "thanks": {
             "name": "spomky-labs/dbsc-bundle",
             "url": "https://github.com/spomky-labs/dbsc-bundle"
