@@ -46,6 +46,27 @@ final class DeviceProofVerifierTest extends TestCase
     }
 
     #[Test]
+    public function itExtractsTheKeyFromTheJwkProtectedHeader(): void
+    {
+        // Given a registration proof that carries the public key in the `jwk` protected header
+        // (the current draft) rather than the legacy `key` payload claim
+        $key = JWKFactory::createECKey('P-256');
+        $public = $key->toPublic()
+            ->all();
+        $token = $this->sign($key, [
+            'jti' => 'challenge-jwk',
+        ], 'dbsc+jwt', $public);
+
+        // When
+        $proof = $this->verifier()
+            ->verifyRegistration($token);
+
+        // Then
+        static::assertSame('challenge-jwk', $proof->challenge());
+        static::assertSame('EC', $proof->publicKeyJwk['kty']);
+    }
+
+    #[Test]
     public function itVerifiesARefreshProofAgainstTheStoredKey(): void
     {
         // Given
@@ -124,17 +145,23 @@ final class DeviceProofVerifierTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param array<string, mixed>      $payload
+     * @param array<string, mixed>|null $jwk embedded in the `jwk` protected header when provided
      */
-    private function sign(JWK $key, array $payload, string $type = 'dbsc+jwt'): string
+    private function sign(JWK $key, array $payload, string $type = 'dbsc+jwt', ?array $jwk = null): string
     {
+        $header = [
+            'alg' => 'ES256',
+            'typ' => $type,
+        ];
+        if ($jwk !== null) {
+            $header['jwk'] = $jwk;
+        }
+
         $builder = new JWSBuilder(new AlgorithmManager([new ES256()]));
         $jws = $builder->create()
             ->withPayload(json_encode($payload, JSON_THROW_ON_ERROR))
-            ->addSignature($key, [
-                'alg' => 'ES256',
-                'typ' => $type,
-            ])
+            ->addSignature($key, $header)
             ->build();
 
         return (new CompactSerializer())->serialize($jws, 0);

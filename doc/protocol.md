@@ -28,8 +28,8 @@ Secure-Session-Response: <JWS>
 
 The browser sends the proof in the `Secure-Session-Response` header (the request body is empty).
 It is a JWS with `typ: dbsc+jwt`, signed by the freshly generated device key, whose public part it
-embeds (a `jwk` protected header, or a `key` claim). The `jti` claim carries the challenge from
-the registration header.
+embeds in a `jwk` protected header (an older draft used a `key` payload claim, still accepted as a
+fallback). The `jti` claim carries the challenge from the registration header.
 
 The server verifies the signature against the embedded key (proof of possession), consumes the
 challenge, records the binding (session identifier, public key, the authenticated user, a rotating

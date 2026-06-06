@@ -118,8 +118,9 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
     }
 
     /**
-     * Extracts the public key the browser embedded in a registration proof. The DBSC draft
-     * carries it as a `key` claim in the payload; the `jwk` protected header is also accepted.
+     * Extracts the public key the browser embedded in a registration proof. The current DBSC
+     * draft carries it as a `jwk` protected header; an older revision used a `key` payload claim,
+     * still accepted as a fallback for compatibility.
      *
      * @param array<string, mixed> $claims
      *
@@ -127,7 +128,8 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
      */
     private function extractEmbeddedKey(JWS $jws, array $claims): array
     {
-        $key = $claims['key'] ?? $jws->getSignature(0)->getProtectedHeader()['jwk'] ?? null;
+        $key = $jws->getSignature(0)
+            ->getProtectedHeader()['jwk'] ?? $claims['key'] ?? null;
         if (! is_array($key) || $key === []) {
             throw InvalidProofException::missingKey();
         }
