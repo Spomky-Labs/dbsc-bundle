@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `include_site`: per-firewall option to emit a site-scoped session (`include_site: true`) instead of the origin-scoped default.
 - `allowed_refresh_initiators`: per-firewall option listing origins allowed to initiate a refresh; emitted in the session config document only when non-empty.
 - Web profiler panel overhaul: the DBSC collector now surfaces the full per-firewall configuration (registration trigger, session lifetime, scope, cookie attributes, persistent vs in-memory stores) and captures the registration/refresh exchange — submitted proof (JWS decoded for display), issued challenge, rotated or cleared bound cookie, and outcome — whenever the request hits a DBSC endpoint, so the profile of an otherwise headless `fetch()` carries the exchange. The panel is laid out in native tabs.
+- Project logo (`docs/logo.svg`) and a matching grayscale toolbar/menu icon for the profiler: a bitten session cookie sealed with a padlock badge, conveying the device-bound, remember-me-like credential at a glance.
 
 ### Changed
 
