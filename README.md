@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.svg" alt="DBSC Bundle logo" width="128" height="128"></p>
+
 # DBSC Bundle
 
 **Device Bound Session Credentials (DBSC)** for Symfony. It protects authenticated sessions
