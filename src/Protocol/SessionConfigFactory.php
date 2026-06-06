@@ -80,6 +80,16 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
         return $config;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function terminate(): array
+    {
+        return [
+            'continue' => false,
+        ];
+    }
+
     private function cookieAttributes(): string
     {
         $parts = ['Path=' . $this->cookie['path']];

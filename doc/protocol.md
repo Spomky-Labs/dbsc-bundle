@@ -104,11 +104,14 @@ The server verifies the signature against the stored public key, consumes the ch
 the cookie token and responds with the same session configuration document and a new
 `Set-Cookie`. The browser then resumes the request it had deferred.
 
-An invalid or stale proof is answered with a fresh challenge (`403`) so the browser retries. An
-**unknown or expired** session, by contrast, is answered with a terminating `4xx` (`401`): the
-browser ends the session and stops refreshing. Deleting a binding server-side (revocation, or the
-automatic logout cleanup) therefore signs the device out, even though it still holds the device
-key, because the server no longer has the public key to verify its proof.
+An invalid or stale proof is answered with a fresh challenge (`403`) so the browser retries.
+Termination comes in two flavours. An **unknown** session (revoked, or cleaned up at logout) is
+answered with a terminating `4xx` (`401`): the browser ends the session and stops refreshing, and
+the existence of the session id is not confirmed. An **expired** session (its durable
+`session_lifetime` elapsed) is ended gracefully instead, with a `200` carrying a `continue: false`
+document and a cleared bound cookie, the spec's deliberate "this session is over" signal. Either
+way the device is signed out even though it still holds the device key, because the server no longer
+issues a fresh cookie for it.
 
 ## Browser-skipped sessions
 

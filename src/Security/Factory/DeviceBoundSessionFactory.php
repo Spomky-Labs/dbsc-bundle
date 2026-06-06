@@ -261,6 +261,7 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->replaceArgument(0, new Reference($refreshHandlerId))
             ->replaceArgument(1, new Reference($challengeManagerId))
             ->replaceArgument(2, new Reference($cookieFactoryId))
+            ->replaceArgument(4, new Reference($sessionConfigId))
             ->addTag('controller.service_arguments');
 
         $dispatcher = 'security.event_dispatcher.' . $firewallName;

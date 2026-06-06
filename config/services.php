@@ -150,6 +150,7 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('challenge manager, set by the security factory'),
             abstract_arg('bound cookie factory, set by the security factory'),
             service('clock'),
+            abstract_arg('session config factory, set by the security factory'),
         ]);
 
     $services->set('dbsc.security.conditions_listener', DeviceBoundSessionConditionsListener::class)

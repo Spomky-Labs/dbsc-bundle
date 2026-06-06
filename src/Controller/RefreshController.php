@@ -14,6 +14,7 @@ use SpomkyLabs\DbscBundle\Exception\UnknownSessionException;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactoryInterface;
 use SpomkyLabs\DbscBundle\Http\SecureSessionHeaders;
 use SpomkyLabs\DbscBundle\Protocol\RefreshHandlerInterface;
+use SpomkyLabs\DbscBundle\Protocol\SessionConfigFactoryInterface;
 use function sprintf;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,6 +33,7 @@ final readonly class RefreshController
         private ChallengeManagerInterface $challengeManager,
         private BoundCookieFactoryInterface $cookieFactory,
         private ClockInterface $clock,
+        private SessionConfigFactoryInterface $configFactory,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -57,7 +59,13 @@ final readonly class RefreshController
                 $request->getSchemeAndHttpHost(),
                 $request->getSchemeAndHttpHost() . $request->getPathInfo(),
             );
-        } catch (UnknownSessionException | SessionExpiredException $e) {
+        } catch (SessionExpiredException $e) {
+            $this->logger->info('DBSC session expired on refresh.', [
+                'exception' => $e,
+            ]);
+
+            return $this->terminate();
+        } catch (UnknownSessionException $e) {
             $this->logger->info('DBSC session terminated on refresh.', [
                 'exception' => $e,
             ]);
@@ -89,6 +97,19 @@ final readonly class RefreshController
         }
 
         return trim($request->getContent());
+    }
+
+    /**
+     * Gracefully ends a session whose durable lifetime has elapsed: a `200` carrying a
+     * `continue: false` document and a cleared bound cookie, so the browser stops refreshing
+     * without treating it as an error.
+     */
+    private function terminate(): Response
+    {
+        $response = new JsonResponse($this->configFactory->terminate());
+        $response->headers->setCookie($this->cookieFactory->clear());
+
+        return $response;
     }
 
     private function challenge(string $sessionIdentifier): Response
