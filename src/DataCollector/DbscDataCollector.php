@@ -164,6 +164,70 @@ final class DbscDataCollector implements DataCollectorInterface
     }
 
     /**
+     * The registration header parsed into its components, or null when no registration was offered.
+     * Defaults gracefully so profiles collected before this key existed stay viewable.
+     *
+     * @return array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null}|null
+     */
+    public function getRegistration(): ?array
+    {
+        /** @var array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null}|null $registration */
+        $registration = $this->data['registration'] ?? null;
+
+        return $registration;
+    }
+
+    public function getSkipped(): ?string
+    {
+        $value = $this->data['skipped'] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    /**
+     * Per-firewall data, each entry backfilled with defaults so the template renders profiles
+     * collected before the richer configuration keys existed.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function getFirewalls(): array
+    {
+        /** @var array<string, array<string, mixed>> $firewalls */
+        $firewalls = $this->data['firewalls'] ?? [];
+
+        $defaults = [
+            'register_path' => null,
+            'refresh_path' => null,
+            'cookie_name' => 'dbsc_session',
+            'cookie' => [],
+            'cookie_present' => false,
+            'cookie_preview' => null,
+            'algorithms' => [],
+            'challenge_ttl' => null,
+            'session_lifetime' => null,
+            'authenticate' => false,
+            'always' => false,
+            'checkbox' => null,
+            'include_site' => false,
+            'scope_exclude_paths' => [],
+            'allowed_refresh_initiators' => [],
+            'binding_repository_service' => null,
+            'challenge_store_service' => null,
+            'binding_session_id' => null,
+            'binding_user' => null,
+            'binding_jwk' => null,
+            'binding_repository' => null,
+            'challenge_store' => null,
+        ];
+
+        foreach ($firewalls as $name => $firewall) {
+            $firewalls[$name] = $firewall + $defaults;
+        }
+
+        return $firewalls;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function getData(): array

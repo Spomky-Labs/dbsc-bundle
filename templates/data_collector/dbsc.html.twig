@@ -52,7 +52,7 @@
         </div>
         <div class="sf-toolbar-info-piece">
             <b>Firewalls</b>
-            <span>{{ collector.data.firewalls|keys|join(', ') ?: '(none)' }}</span>
+            <span>{{ collector.firewalls|keys|join(', ') ?: '(none)' }}</span>
         </div>
     {% endset %}
 
@@ -86,7 +86,7 @@
             <span class="label">Device-bound cookie</span>
         </div>
         <div class="metric">
-            <span class="value">{{ collector.data.firewalls|length }}</span>
+            <span class="value">{{ collector.firewalls|length }}</span>
             <span class="label">Firewalls with DBSC</span>
         </div>
         <div class="metric">
@@ -167,33 +167,33 @@
                             <th>Registration header</th>
                             <td>{{ collector.registrationHeader ? ('<code>' ~ collector.registrationHeader ~ '</code>')|raw : '(none)' }}</td>
                         </tr>
-                        {% if collector.data.registration %}
-                            <tr><th>Offered algorithms</th><td>{{ collector.data.registration.algorithms|join(', ') ?: '(none)' }}</td></tr>
-                            <tr><th>Challenge</th><td>{{ collector.data.registration.challenge ?? '(none)' }}</td></tr>
-                            <tr><th>Registration path</th><td>{{ collector.data.registration.path ? ('<code>' ~ collector.data.registration.path ~ '</code>')|raw : '(none)' }}</td></tr>
-                            <tr><th>Authorization</th><td>{{ collector.data.registration.authorization ?? '(none)' }}</td></tr>
+                        {% if collector.registration %}
+                            <tr><th>Offered algorithms</th><td>{{ collector.registration.algorithms|join(', ') ?: '(none)' }}</td></tr>
+                            <tr><th>Challenge</th><td>{{ collector.registration.challenge ?? '(none)' }}</td></tr>
+                            <tr><th>Registration path</th><td>{{ collector.registration.path ? ('<code>' ~ collector.registration.path ~ '</code>')|raw : '(none)' }}</td></tr>
+                            <tr><th>Authorization</th><td>{{ collector.registration.authorization ?? '(none)' }}</td></tr>
                         {% else %}
                             <tr><th>Challenge</th><td>(none)</td></tr>
                         {% endif %}
                         <tr>
                             <th>Skipped header (Secure-Session-Skipped)</th>
-                            <td>{{ collector.data.skipped ? ('<code>' ~ collector.data.skipped ~ '</code>')|raw : '(none)' }}</td>
+                            <td>{{ collector.skipped ? ('<code>' ~ collector.skipped ~ '</code>')|raw : '(none)' }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="tab {{ collector.data.firewalls is empty ? 'disabled' : '' }}">
-            <h3 class="tab-title">Firewalls &amp; configuration <span class="badge">{{ collector.data.firewalls|length }}</span></h3>
+        <div class="tab {{ collector.firewalls is empty ? 'disabled' : '' }}">
+            <h3 class="tab-title">Firewalls &amp; configuration <span class="badge">{{ collector.firewalls|length }}</span></h3>
             <div class="tab-content">
-                {% if collector.data.firewalls is empty %}
+                {% if collector.firewalls is empty %}
                     <div class="empty">
                         <p>No firewall enables <code>device_bound_session</code>.</p>
                     </div>
                 {% endif %}
 
-                {% for name, firewall in collector.data.firewalls %}
+                {% for name, firewall in collector.firewalls %}
                     <h4>Firewall <code>{{ name }}</code></h4>
                     <table>
                         <thead><tr><th scope="col" class="key" style="width: 220px;">Option</th><th scope="col">Value</th></tr></thead>
