@@ -26,6 +26,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Corrected the cookie-name guidance: the DBSC spec places no restriction on the bound cookie name, so `__Host-`/`__Secure-` prefixes are allowed (a `__Host-` name requires `secure`, `path=/` and no `domain`, which the defaults satisfy). The default stays the unprefixed `dbsc_session` for the broadest compatibility. The previous "browsers reject prefixed cookies" note (0.2.0) was inaccurate.
 
+
+-----
+
+### Release Notes for [0.3.0](https://github.com/Spomky-Labs/dbsc-bundle/milestone/6)
+
+Feature release (minor)
+
+### 0.3.0
+
+- Total issues resolved: **0**
+- Total pull requests resolved: **0**
+- Total contributors: **0**
+
 ## [0.2.0] - 2026-06-05
 
 ### Added
