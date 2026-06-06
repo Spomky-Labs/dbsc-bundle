@@ -138,28 +138,24 @@ function phpunit(#[AsRawTokens] array $args = []): void
     );
 }
 
-#[AsTask(description: 'Run Easy Coding Standard')]
-function ecs(): void
+#[AsTask(description: 'Run Easy Coding Standard (use --fix to automatically fix issues)')]
+function ecs(bool $fix = false): void
 {
-    phpqa(['composer', 'exec', '--', 'ecs', 'check', '--config', '.ci-tools/ecs.php']);
+    $command = ['composer', 'exec', '--', 'ecs', 'check', '--config', '.ci-tools/ecs.php'];
+    if ($fix) {
+        $command[] = '--fix';
+    }
+    phpqa($command);
 }
 
-#[AsTask(description: 'Fix coding style with Easy Coding Standard')]
-function ecs_fix(): void
+#[AsTask(description: 'Run Rector (use --fix to apply automatic refactorings)')]
+function rector(bool $fix = false): void
 {
-    phpqa(['composer', 'exec', '--', 'ecs', 'check', '--config', '.ci-tools/ecs.php', '--fix']);
-}
-
-#[AsTask(description: 'Run Rector dry-run')]
-function rector(): void
-{
-    phpqa(['composer', 'exec', '--', 'rector', 'process', '--dry-run', '--config', '.ci-tools/rector.php']);
-}
-
-#[AsTask(description: 'Run Rector with fix')]
-function rector_fix(): void
-{
-    phpqa(['composer', 'exec', '--', 'rector', 'process', '--config', '.ci-tools/rector.php']);
+    $command = ['composer', 'exec', '--', 'rector', 'process', '--config', '.ci-tools/rector.php'];
+    if (! $fix) {
+        $command[] = '--dry-run';
+    }
+    phpqa($command);
 }
 
 #[AsTask(description: 'Run PHPStan')]
@@ -203,22 +199,4 @@ function lint(): void
 function composer(#[AsRawTokens] array $args = []): void
 {
     phpqa(['composer', ...$args]);
-}
-
-#[AsTask(description: 'Fix code style and apply Rector rules, then run static analysis.')]
-function prepare_pr(): void
-{
-    io()->title('Preparing code for pull request…');
-
-    ecs_fix();
-    rector_fix();
-
-    io()
-        ->section('Running static analysis…');
-    phpstan_baseline();
-    deptrac();
-    lint();
-
-    io()
-        ->success('Code is ready. You may now commit and push your changes.');
 }
