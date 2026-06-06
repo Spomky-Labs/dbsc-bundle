@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Psr\Log\NullLogger;
 use SpomkyLabs\DbscBundle\Tests\LoginTestAuthenticator;
 use SpomkyLabs\DbscBundle\Tests\SecuredController;
 
@@ -16,6 +17,11 @@ return static function (ContainerConfigurator $container): void {
     $services->set(SecuredController::class)
         ->tag('controller.service_arguments');
     $services->set(LoginTestAuthenticator::class);
+
+    // Silence the framework logger: functional tests deliberately hit secured endpoints
+    // unauthenticated, and the resulting access-denied exceptions would otherwise print
+    // [error] lines to stderr during the run.
+    $services->set('logger', NullLogger::class);
 
     $container->extension('framework', [
         'test' => true,
