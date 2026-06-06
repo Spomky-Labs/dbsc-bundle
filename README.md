@@ -42,6 +42,7 @@ Full documentation lives in [`doc/`](doc/index.md):
 - [Installation](doc/installation.md)
 - [Configuration reference](doc/configuration.md)
 - [Adoption modes](doc/modes.md)
+- [Migrating from remember-me](doc/remember-me-migration.md)
 - [Protocol and endpoints](doc/protocol.md)
 - [Production storage](doc/storage.md)
 - [Extending the bundle](doc/extending.md)

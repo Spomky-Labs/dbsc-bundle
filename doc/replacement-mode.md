@@ -5,7 +5,9 @@ remember-me cookie normally plays. Instead of a static, replayable remember-me c
 long-lived credential becomes a short, device-bound cookie that the browser silently re-proves
 and rotates through the refresh endpoint.
 
-This page assumes you already run [additive mode](additive-mode.md).
+This page assumes you already run [additive mode](additive-mode.md). If you are coming from
+Symfony's remember-me, the [remember-me migration guide](remember-me-migration.md) walks the whole
+move step by step, with a fallback-safe path for unsupported browsers.
 
 ## Enabling it
 

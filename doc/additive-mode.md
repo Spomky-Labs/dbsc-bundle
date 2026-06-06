@@ -48,6 +48,21 @@ that. With `always: true` every login registers; otherwise registration happens 
 request carries the configured checkbox parameter, truthy. Replacing remember-me with DBSC is
 therefore a one-badge swap.
 
+### Linking the registration to your backend (optional)
+
+If you need to tie a registration to a value only your backend can vouch for, set an
+`authorization` string on the badge. The bundle emits it in the registration header, and the
+browser must echo it back, unchanged, in the registration proof, where the bundle verifies it
+matches:
+
+```php
+$badge = (new DeviceBoundSessionBadge())->setAuthorization($opaqueValue);
+```
+
+Most setups do not need this — the registration endpoint already runs authenticated and binds the
+current user. See the [protocol page](protocol.md#1-registration-header-at-login) for the wire
+detail.
+
 ## Access control for the endpoints
 
 The two endpoints have opposite access requirements, so declare them explicitly:

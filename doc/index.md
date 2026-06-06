@@ -72,6 +72,7 @@ Each topic has its own page; pick what you need.
 | Check requirements and registration | [Installation](installation.md) |
 | Start safely (cookie alongside your session) | [Additive mode](additive-mode.md) |
 | Replace remember-me with a device-bound credential | [Long-lived credential](replacement-mode.md) |
+| Migrate an existing remember-me setup, step by step | [Remember-me migration](remember-me-migration.md) |
 | Tune cookies, algorithms, endpoints or stores | [Configuration reference](configuration.md) |
 | Go to production (shared, persistent stores) | [Production storage](storage.md) |
 | Customise internals or accept another algorithm | [Extending the bundle](extending.md) |

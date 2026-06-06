@@ -17,3 +17,6 @@ DBSC takes over the long-lived re-authentication credential, the role of a remem
 A request is then authenticated from the device-bound cookie, granted
 `IS_AUTHENTICATED_REMEMBERED`. Enabling it is a single firewall option once additive mode is in
 place.
+
+Already using Symfony's remember-me? The [remember-me migration guide](remember-me-migration.md)
+maps every option across and walks the two modes above as a gradual, fallback-safe migration.
