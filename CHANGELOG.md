@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.0] - 2026-06-06
 
+### Added
+
+- `authorization` round-trip: `DeviceBoundSessionBadge::setAuthorization()` makes the bundle emit an `authorization` parameter in the `Secure-Session-Registration` header, bind it to the challenge, and verify the registration proof echoes it back unchanged (spec § 9.10). Lets you tie a registration to a value only your backend can vouch for.
+
 ### Changed
 
 - The registration proof's embedded public key is now read from the `jwk` protected header first (the current draft), falling back to the legacy `key` payload claim for compatibility.

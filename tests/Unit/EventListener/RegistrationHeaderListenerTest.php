@@ -47,6 +47,44 @@ final class RegistrationHeaderListenerTest extends TestCase
     }
 
     #[Test]
+    public function itEmitsTheAuthorizationParameterWhenTheBadgeCarriesOne(): void
+    {
+        // Given an enabled badge carrying an application-defined authorization value
+        $response = new Response();
+        $passport = new SelfValidatingPassport(new UserBadge('alice'));
+        $passport->addBadge((new DeviceBoundSessionBadge())->enable()->setAuthorization('auth-token-123'));
+
+        // When
+        $this->listener()
+            ->onLoginSuccess($this->event($passport, $response));
+
+        // Then the registration header echoes it back as an authorization parameter
+        static::assertStringContainsString(
+            'authorization="auth-token-123"',
+            (string) $response->headers->get(SecureSessionHeaders::REGISTRATION)
+        );
+    }
+
+    #[Test]
+    public function itOmitsTheAuthorizationParameterWhenTheBadgeHasNone(): void
+    {
+        // Given an enabled badge without an authorization value
+        $response = new Response();
+        $passport = new SelfValidatingPassport(new UserBadge('alice'));
+        $passport->addBadge((new DeviceBoundSessionBadge())->enable());
+
+        // When
+        $this->listener()
+            ->onLoginSuccess($this->event($passport, $response));
+
+        // Then no authorization parameter is added
+        static::assertStringNotContainsString(
+            'authorization=',
+            (string) $response->headers->get(SecureSessionHeaders::REGISTRATION)
+        );
+    }
+
+    #[Test]
     public function itDoesNotEmitWhenTheBadgeIsPresentButDisabled(): void
     {
         // Given a login passport whose badge was not enabled by the conditions

@@ -32,4 +32,9 @@ final class InvalidProofException extends DbscException
     {
         return new self('The proof signature could not be verified against the device key.');
     }
+
+    public static function authorizationMismatch(): self
+    {
+        return new self('The registration proof does not echo the expected "authorization" value.');
+    }
 }

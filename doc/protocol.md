@@ -19,6 +19,21 @@ emitted only when the badge is present, never on a device-bound re-authenticatio
 registration is not re-triggered on every request. A browser that does not understand the header
 ignores it.
 
+If the `DeviceBoundSessionBadge` carries an application-defined `authorization` value, it is added
+as an `authorization="<value>"` parameter:
+
+```
+Secure-Session-Registration: (ES256 RS256);challenge="<value>";path="/dbsc/main/register";authorization="<opaque>"
+```
+
+The browser must echo it back, unchanged, in the registration proof (an `authorization` claim). The
+server checks it matches the value bound to the challenge and rejects the proof otherwise. Use it to
+tie a registration to something only your backend can vouch for. Set it from your authenticator:
+
+```php
+$passport->addBadge((new DeviceBoundSessionBadge())->enable()->setAuthorization($value));
+```
+
 ## 2. Registration endpoint
 
 ```

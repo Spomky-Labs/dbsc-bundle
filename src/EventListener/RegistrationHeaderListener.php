@@ -43,12 +43,20 @@ final readonly class RegistrationHeaderListener
             return;
         }
 
-        $challenge = $this->challengeManager->issue();
+        $authorization = $badge->getAuthorization();
+        $challenge = $this->challengeManager->issue(null, $authorization);
         $algorithms = implode(' ', $this->algorithmProvider->getAllowedNames());
 
-        $response->headers->set(
-            SecureSessionHeaders::REGISTRATION,
-            sprintf('(%s);challenge="%s";path="%s"', $algorithms, $challenge->value, $this->registrationPath),
+        $header = sprintf(
+            '(%s);challenge="%s";path="%s"',
+            $algorithms,
+            $challenge->value,
+            $this->registrationPath,
         );
+        if ($authorization !== null) {
+            $header .= sprintf(';authorization="%s"', $authorization);
+        }
+
+        $response->headers->set(SecureSessionHeaders::REGISTRATION, $header);
     }
 }

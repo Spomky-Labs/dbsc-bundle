@@ -19,10 +19,16 @@ final readonly class ChallengeManager implements ChallengeManagerInterface
     ) {
     }
 
-    public function issue(?string $sessionIdentifier = null): Challenge
+    public function issue(?string $sessionIdentifier = null, ?string $authorization = null): Challenge
     {
         $value = self::base64UrlEncode(random_bytes(32));
-        $challenge = new Challenge($value, $this->clock->now()->getTimestamp() + $this->ttl, $sessionIdentifier);
+        $challenge = new Challenge(
+            $value,
+            $this->clock->now()
+                ->getTimestamp() + $this->ttl,
+            $sessionIdentifier,
+            $authorization,
+        );
         $this->store->save($challenge);
 
         return $challenge;
@@ -30,9 +36,10 @@ final readonly class ChallengeManager implements ChallengeManagerInterface
 
     /**
      * Validates that the presented challenge value was issued, not expired and (when given)
-     * bound to the expected session. Consumes it on success so it cannot be replayed.
+     * bound to the expected session. Consumes it on success so it cannot be replayed and returns
+     * it so the caller can inspect what was bound to it.
      */
-    public function consume(string $value, ?string $expectedSessionIdentifier = null): void
+    public function consume(string $value, ?string $expectedSessionIdentifier = null): Challenge
     {
         if ($value === '') {
             throw InvalidChallengeException::missing();
@@ -51,6 +58,8 @@ final readonly class ChallengeManager implements ChallengeManagerInterface
         }
 
         $this->store->consume($value);
+
+        return $challenge;
     }
 
     private static function base64UrlEncode(string $data): string
