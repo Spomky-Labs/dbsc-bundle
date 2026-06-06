@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Secure-Session-Skipped`: the bundle now logs (notice level) when a browser reports it skipped DBSC for a session (refresh endpoint unreachable, server error, or quota exceeded), to help spot a misbehaving endpoint.
 - `include_site`: per-firewall option to emit a site-scoped session (`include_site: true`) instead of the origin-scoped default.
 - `allowed_refresh_initiators`: per-firewall option listing origins allowed to initiate a refresh; emitted in the session config document only when non-empty.
+- Web profiler panel overhaul: the DBSC collector now surfaces the full per-firewall configuration (registration trigger, session lifetime, scope, cookie attributes, persistent vs in-memory stores) and captures the registration/refresh exchange — submitted proof (JWS decoded for display), issued challenge, rotated or cleared bound cookie, and outcome — whenever the request hits a DBSC endpoint, so the profile of an otherwise headless `fetch()` carries the exchange. The panel is laid out in native tabs.
 
 ### Changed
 
