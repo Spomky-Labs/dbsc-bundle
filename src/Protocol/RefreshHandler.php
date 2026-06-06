@@ -30,8 +30,12 @@ final readonly class RefreshHandler implements RefreshHandlerInterface
     ) {
     }
 
-    public function refresh(string $sessionIdentifier, string $proofToken, string $origin): IssuedSession
-    {
+    public function refresh(
+        string $sessionIdentifier,
+        string $proofToken,
+        string $origin,
+        ?string $expectedAudience = null,
+    ): IssuedSession {
         $binding = $this->bindings->findBySessionIdentifier($sessionIdentifier);
         if ($binding === null) {
             throw UnknownSessionException::forIdentifier($sessionIdentifier);
@@ -45,7 +49,7 @@ final readonly class RefreshHandler implements RefreshHandlerInterface
             throw SessionExpiredException::forIdentifier($sessionIdentifier);
         }
 
-        $proof = $this->verifier->verifyRefresh($proofToken, $binding->publicKeyJwk);
+        $proof = $this->verifier->verifyRefresh($proofToken, $binding->publicKeyJwk, $expectedAudience);
         $this->challengeManager->consume($proof->challenge(), $sessionIdentifier);
 
         $cookieToken = $this->tokens->generate();

@@ -43,4 +43,14 @@ final readonly class DeviceProof
 
         return is_string($authorization) ? $authorization : null;
     }
+
+    /**
+     * The endpoint the proof was minted for (`aud` claim), or null when the browser omitted it.
+     */
+    public function audience(): ?string
+    {
+        $audience = $this->claims['aud'] ?? null;
+
+        return is_string($audience) ? $audience : null;
+    }
 }

@@ -41,6 +41,7 @@ final readonly class RegistrationController
                 $this->extractProof($request),
                 $userIdentifier,
                 $request->getSchemeAndHttpHost(),
+                $request->getSchemeAndHttpHost() . $request->getPathInfo(),
             );
         } catch (DbscException $e) {
             $this->logger->warning('DBSC registration rejected.', [

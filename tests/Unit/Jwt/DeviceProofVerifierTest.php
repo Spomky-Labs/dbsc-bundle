@@ -87,6 +87,59 @@ final class DeviceProofVerifierTest extends TestCase
     }
 
     #[Test]
+    public function itAcceptsAProofWhoseAudienceMatches(): void
+    {
+        // Given a refresh proof whose aud matches the endpoint
+        $key = JWKFactory::createECKey('P-256');
+        $token = $this->sign($key, [
+            'jti' => 'x',
+            'aud' => 'https://example.com/dbsc/refresh',
+        ]);
+
+        // When
+        $proof = $this->verifier()
+            ->verifyRefresh($token, $key->toPublic()->all(), 'https://example.com/dbsc/refresh');
+
+        // Then
+        static::assertSame('x', $proof->challenge());
+    }
+
+    #[Test]
+    public function itRejectsAProofWhoseAudienceDiffers(): void
+    {
+        // Given a refresh proof minted for another endpoint
+        $key = JWKFactory::createECKey('P-256');
+        $token = $this->sign($key, [
+            'jti' => 'x',
+            'aud' => 'https://example.com/dbsc/register',
+        ]);
+
+        // Then
+        $this->expectException(InvalidProofException::class);
+
+        // When the expected audience differs
+        $this->verifier()
+            ->verifyRefresh($token, $key->toPublic()->all(), 'https://example.com/dbsc/refresh');
+    }
+
+    #[Test]
+    public function itToleratesAProofWithoutAnAudienceClaim(): void
+    {
+        // Given a refresh proof that omits aud, while an audience is expected
+        $key = JWKFactory::createECKey('P-256');
+        $token = $this->sign($key, [
+            'jti' => 'x',
+        ]);
+
+        // When
+        $proof = $this->verifier()
+            ->verifyRefresh($token, $key->toPublic()->all(), 'https://example.com/dbsc/refresh');
+
+        // Then a missing claim is tolerated
+        static::assertSame('x', $proof->challenge());
+    }
+
+    #[Test]
     public function itRejectsAProofSignedByAnotherKey(): void
     {
         // Given a proof signed by a different key than the stored one

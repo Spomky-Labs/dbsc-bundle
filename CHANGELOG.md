@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The registration proof's embedded public key is now read from the `jwk` protected header first (the current draft), falling back to the legacy `key` payload claim for compatibility.
+- Proof verification now checks the `aud` claim against the endpoint URL when the browser includes it (a missing claim is tolerated), binding a proof to the endpoint it was minted for.
 
 ### Fixed
 

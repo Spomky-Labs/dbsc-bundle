@@ -9,5 +9,10 @@ namespace SpomkyLabs\DbscBundle\Protocol;
  */
 interface RefreshHandlerInterface
 {
-    public function refresh(string $sessionIdentifier, string $proofToken, string $origin): IssuedSession;
+    public function refresh(
+        string $sessionIdentifier,
+        string $proofToken,
+        string $origin,
+        ?string $expectedAudience = null,
+    ): IssuedSession;
 }

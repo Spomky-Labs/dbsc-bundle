@@ -51,7 +51,12 @@ final readonly class RefreshController
         }
 
         try {
-            $issued = $this->handler->refresh($sessionIdentifier, $proof, $request->getSchemeAndHttpHost());
+            $issued = $this->handler->refresh(
+                $sessionIdentifier,
+                $proof,
+                $request->getSchemeAndHttpHost(),
+                $request->getSchemeAndHttpHost() . $request->getPathInfo(),
+            );
         } catch (UnknownSessionException | SessionExpiredException $e) {
             $this->logger->info('DBSC session terminated on refresh.', [
                 'exception' => $e,

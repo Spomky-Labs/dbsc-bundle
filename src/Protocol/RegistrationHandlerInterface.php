@@ -9,5 +9,10 @@ namespace SpomkyLabs\DbscBundle\Protocol;
  */
 interface RegistrationHandlerInterface
 {
-    public function register(string $proofToken, ?string $userIdentifier, string $origin): IssuedSession;
+    public function register(
+        string $proofToken,
+        ?string $userIdentifier,
+        string $origin,
+        ?string $expectedAudience = null,
+    ): IssuedSession;
 }

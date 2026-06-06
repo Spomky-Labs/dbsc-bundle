@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SpomkyLabs\DbscBundle\Jwt;
 
+use function hash_equals;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -36,9 +37,10 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
     }
 
     /**
-     * Verifies a registration proof, returning the embedded device public key and claims.
+     * Verifies a registration proof, returning the embedded device public key and claims. When
+     * `$expectedAudience` is given and the proof carries an `aud` claim, the two must match.
      */
-    public function verifyRegistration(string $token): DeviceProof
+    public function verifyRegistration(string $token, ?string $expectedAudience = null): DeviceProof
     {
         [$jws, $claims] = $this->parse($token);
 
@@ -47,15 +49,19 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
             throw InvalidProofException::badSignature();
         }
 
-        return new DeviceProof($jwk, $claims);
+        $proof = new DeviceProof($jwk, $claims);
+        $this->assertAudience($proof, $expectedAudience);
+
+        return $proof;
     }
 
     /**
-     * Verifies a refresh proof against the device key recorded at registration.
+     * Verifies a refresh proof against the device key recorded at registration. When
+     * `$expectedAudience` is given and the proof carries an `aud` claim, the two must match.
      *
      * @param array<string, mixed> $boundKey the stored device public key (JWK)
      */
-    public function verifyRefresh(string $token, array $boundKey): DeviceProof
+    public function verifyRefresh(string $token, array $boundKey, ?string $expectedAudience = null): DeviceProof
     {
         [$jws, $claims] = $this->parse($token);
 
@@ -63,7 +69,27 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
             throw InvalidProofException::badSignature();
         }
 
-        return new DeviceProof($boundKey, $claims);
+        $proof = new DeviceProof($boundKey, $claims);
+        $this->assertAudience($proof, $expectedAudience);
+
+        return $proof;
+    }
+
+    /**
+     * Rejects a proof whose `aud` claim, when present, does not match the endpoint it was sent to.
+     * A missing claim is tolerated: not every browser sets it, and the single-use challenge already
+     * binds the proof to a context.
+     */
+    private function assertAudience(DeviceProof $proof, ?string $expectedAudience): void
+    {
+        $audience = $proof->audience();
+        if ($expectedAudience === null || $audience === null) {
+            return;
+        }
+
+        if (! hash_equals($expectedAudience, $audience)) {
+            throw InvalidProofException::audienceMismatch($expectedAudience, $audience);
+        }
     }
 
     /**

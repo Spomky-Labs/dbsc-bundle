@@ -33,9 +33,13 @@ final readonly class RegistrationHandler implements RegistrationHandlerInterface
      * issues the first bound cookie. When an `authorization` value was bound to the challenge, the
      * proof must echo it back unchanged (spec § 9.10) or it is rejected.
      */
-    public function register(string $proofToken, ?string $userIdentifier, string $origin): IssuedSession
-    {
-        $proof = $this->verifier->verifyRegistration($proofToken);
+    public function register(
+        string $proofToken,
+        ?string $userIdentifier,
+        string $origin,
+        ?string $expectedAudience = null,
+    ): IssuedSession {
+        $proof = $this->verifier->verifyRegistration($proofToken, $expectedAudience);
         $challenge = $this->challengeManager->consume($proof->challenge());
 
         $expectedAuthorization = $challenge->authorization;

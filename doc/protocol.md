@@ -46,9 +46,11 @@ It is a JWS with `typ: dbsc+jwt`, signed by the freshly generated device key, wh
 embeds in a `jwk` protected header (an older draft used a `key` payload claim, still accepted as a
 fallback). The `jti` claim carries the challenge from the registration header.
 
-The server verifies the signature against the embedded key (proof of possession), consumes the
-challenge, records the binding (session identifier, public key, the authenticated user, a rotating
-cookie token) and responds:
+The server verifies the signature against the embedded key (proof of possession) and, when the
+proof carries an `aud` claim, checks it matches the endpoint URL the request was sent to (a missing
+claim is tolerated, since the single-use challenge already binds the proof to its context). It then
+consumes the challenge, records the binding (session identifier, public key, the authenticated user,
+a rotating cookie token) and responds:
 
 ```
 HTTP/1.1 200 OK
