@@ -176,7 +176,7 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
     ): string|array {
         /** @var list<string> $algorithms */
         $algorithms = $config['algorithms'];
-        /** @var array{name: string} $cookie */
+        /** @var array{name: string, lifetime: int, path: string, domain: string|null, secure: bool, http_only: bool, same_site: string} $cookie */
         $cookie = $config['cookie'];
         /** @var int $challengeTtl */
         $challengeTtl = $config['challenge_ttl'];
@@ -310,9 +310,18 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             'registration_controller' => $registrationControllerId,
             'refresh_controller' => $refreshControllerId,
             'cookie_name' => $cookie['name'],
+            'cookie' => $cookie,
             'algorithms' => $algorithms,
             'challenge_ttl' => $challengeTtl,
+            'session_lifetime' => $sessionLifetime,
             'authenticate' => $config['authenticate'] === true,
+            'always' => $config['always'] === true,
+            'checkbox' => $config['checkbox'],
+            'include_site' => $includeSite,
+            'scope_exclude_paths' => $excludePaths,
+            'allowed_refresh_initiators' => $allowedRefreshInitiators,
+            'binding_repository_service' => $bindingRepository,
+            'challenge_store_service' => $challengeStore,
         ];
         $container->setParameter('dbsc.firewalls', $firewalls);
 
