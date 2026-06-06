@@ -108,6 +108,14 @@ browser ends the session and stops refreshing. Deleting a binding server-side (r
 automatic logout cleanup) therefore signs the device out, even though it still holds the device
 key, because the server no longer has the public key to verify its proof.
 
+## Browser-skipped sessions
+
+When a supporting browser cannot run DBSC for a session (the refresh endpoint was unreachable,
+returned a server error, or a quota was exceeded) it lets the request through without the bound
+cookie and adds a `Secure-Session-Skipped` request header naming the reason and the session. The
+spec does not require the server to react; the bundle logs the occurrence (notice level) so you can
+spot a misbehaving or unreachable refresh endpoint. No application wiring is required.
+
 ## Access control
 
 The two endpoints have opposite requirements: `refresh` must be publicly reachable (it

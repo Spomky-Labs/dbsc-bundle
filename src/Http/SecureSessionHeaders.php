@@ -36,6 +36,14 @@ final class SecureSessionHeaders
     public const RESPONSE = 'Secure-Session-Response';
 
     /**
+     * Request header the browser sends when it could not run DBSC for a session and is therefore
+     * letting the request through without the bound cookie. Its value is a structured-fields list
+     * of reason tokens (`unreachable`, `server_error`, `quota_exceeded`) with a
+     * `session_identifier` parameter. Informational only; the server is not required to act on it.
+     */
+    public const SKIPPED = 'Secure-Session-Skipped';
+
+    /**
      * Media type of the JWS body posted by the browser.
      */
     public const JWT_CONTENT_TYPE = 'application/jwt';

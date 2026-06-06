@@ -20,6 +20,7 @@ use SpomkyLabs\DbscBundle\DataCollector\DbscDataCollector;
 use SpomkyLabs\DbscBundle\EventListener\DeviceBoundSessionConditionsListener;
 use SpomkyLabs\DbscBundle\EventListener\DeviceBoundSessionLogoutListener;
 use SpomkyLabs\DbscBundle\EventListener\RegistrationHeaderListener;
+use SpomkyLabs\DbscBundle\EventListener\SecureSessionSkippedListener;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactory;
 use SpomkyLabs\DbscBundle\Jwt\AlgorithmProvider;
 use SpomkyLabs\DbscBundle\Jwt\DeviceProofVerifier;
@@ -61,6 +62,14 @@ return static function (ContainerConfigurator $container): void {
     // Stateless, configuration-free service shared by every firewall.
     $services->set(TokenGenerator::class);
     $services->alias(TokenGeneratorInterface::class, TokenGenerator::class);
+
+    // Firewall-agnostic: logs the `Secure-Session-Skipped` header on any incoming request.
+    $services->set(SecureSessionSkippedListener::class)
+        ->args([service('logger')->nullOnInvalid()])
+        ->tag('kernel.event_listener', [
+            'event' => 'kernel.request',
+            'method' => 'onKernelRequest',
+        ]);
 
     $services->set('dbsc.algorithm_provider', AlgorithmProvider::class)
         ->abstract()
