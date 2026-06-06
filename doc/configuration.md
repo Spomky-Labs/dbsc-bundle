@@ -44,6 +44,8 @@ security:
                 scope_exclude_paths: []
                 # Emit a site-scoped session (include_site: true) instead of origin-scoped.
                 include_site: false
+                # Origins allowed to initiate a refresh (empty omits the field).
+                allowed_refresh_initiators: []
 
                 # Storage (null = per-firewall in-memory, dev/test only)
                 binding_repository: null
@@ -126,6 +128,19 @@ By default the session is origin-scoped (`include_site: false`): it covers only 
 host and port that registered it. Set `include_site: true` to make it site-scoped, so the binding
 also covers subdomains of the same registrable domain. Origin-scoped is the safer default; widen it
 only when sessions legitimately span subdomains.
+
+### `allowed_refresh_initiators`
+
+Origins, other than the session's own origin, that the browser may let initiate a refresh — for
+example a cross-origin context that embeds your application. Left empty (the default), the field is
+omitted and only the session's origin can drive refreshes. List the full origins (scheme, host and
+optional port), not bare hostnames:
+
+```yaml
+allowed_refresh_initiators:
+    - 'https://app.example.com'
+    - 'https://admin.example.com:8443'
+```
 
 ### `binding_repository` and `challenge_store`
 

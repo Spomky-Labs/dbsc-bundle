@@ -111,6 +111,15 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             )
             ->defaultFalse()
             ->end()
+            ->arrayNode('allowed_refresh_initiators')
+            ->info(
+                'Origins allowed to initiate a refresh (e.g. embedded cross-origin contexts). Emitted as allowed_refresh_initiators; empty omits it.'
+            )
+            ->example(['https://app.example.com', 'https://admin.example.com:8443'])
+            ->scalarPrototype()
+            ->end()
+            ->defaultValue([])
+            ->end()
             ->scalarNode('register')
             ->info('Path of the registration endpoint. Null derives /dbsc/<firewall>/register.')
             ->defaultNull()
@@ -177,6 +186,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $excludePaths = $config['scope_exclude_paths'];
         /** @var bool $includeSite */
         $includeSite = $config['include_site'];
+        /** @var list<string> $allowedRefreshInitiators */
+        $allowedRefreshInitiators = $config['allowed_refresh_initiators'];
         /** @var string|null $bindingRepository */
         $bindingRepository = $config['binding_repository'];
         /** @var string|null $challengeStore */
@@ -221,7 +232,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->replaceArgument(0, $refreshPath)
             ->replaceArgument(1, $cookie)
             ->replaceArgument(2, $excludePaths)
-            ->replaceArgument(3, $includeSite);
+            ->replaceArgument(3, $includeSite)
+            ->replaceArgument(4, $allowedRefreshInitiators);
 
         $registrationHandlerId = 'dbsc.registration_handler.' . $firewallName;
         $container->setDefinition($registrationHandlerId, new ChildDefinition('dbsc.registration_handler'))

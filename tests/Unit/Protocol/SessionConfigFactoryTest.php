@@ -77,4 +77,46 @@ final class SessionConfigFactoryTest extends TestCase
         // Then
         static::assertTrue($config['scope']['include_site']);
     }
+
+    #[Test]
+    public function itOmitsAllowedRefreshInitiatorsWhenEmpty(): void
+    {
+        // Given a factory with no allowed refresh initiators
+        $factory = $this->factory([]);
+
+        // When
+        $config = $factory->create('session-1', 'https://example.com');
+
+        // Then the optional key is not emitted
+        static::assertArrayNotHasKey('allowed_refresh_initiators', $config);
+    }
+
+    #[Test]
+    public function itEmitsAllowedRefreshInitiatorsWhenConfigured(): void
+    {
+        // Given a factory with allowed refresh initiators
+        $factory = $this->factory(['https://app.example.com']);
+
+        // When
+        $config = $factory->create('session-1', 'https://example.com');
+
+        // Then
+        static::assertSame(['https://app.example.com'], $config['allowed_refresh_initiators']);
+    }
+
+    /**
+     * @param list<string> $allowedRefreshInitiators
+     */
+    private function factory(array $allowedRefreshInitiators): SessionConfigFactory
+    {
+        return new SessionConfigFactory('/dbsc/refresh', [
+            'name' => 'dbsc_session',
+            'lifetime' => 600,
+            'path' => '/',
+            'domain' => null,
+            'secure' => true,
+            'http_only' => true,
+            'same_site' => 'lax',
+        ], [], false, $allowedRefreshInitiators);
+    }
 }

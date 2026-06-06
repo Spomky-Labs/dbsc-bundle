@@ -21,12 +21,15 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
      *                                    their requests never trigger a refresh
      * @param bool         $includeSite  true emits a site-scoped session (`include_site: true`), false
      *                                    keeps it origin-scoped
+     * @param list<string> $allowedRefreshInitiators origins allowed to initiate a refresh; emitted as
+     *                                                `allowed_refresh_initiators` only when non-empty
      */
     public function __construct(
         private string $refreshPath,
         private array $cookie,
         private array $excludePaths = [],
         private bool $includeSite = false,
+        private array $allowedRefreshInitiators = [],
     ) {
     }
 
@@ -53,7 +56,7 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
             ];
         }
 
-        return [
+        $config = [
             'session_identifier' => $sessionIdentifier,
             'refresh_url' => $this->refreshPath,
             'scope' => [
@@ -69,6 +72,12 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
                 ],
             ],
         ];
+
+        if ($this->allowedRefreshInitiators !== []) {
+            $config['allowed_refresh_initiators'] = $this->allowedRefreshInitiators;
+        }
+
+        return $config;
     }
 
     private function cookieAttributes(): string

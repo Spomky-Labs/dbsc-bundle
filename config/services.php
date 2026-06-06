@@ -108,6 +108,7 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('cookie config, set by the security factory'),
             abstract_arg('scope exclude paths, set by the security factory'),
             abstract_arg('include_site flag, set by the security factory'),
+            abstract_arg('allowed refresh initiators, set by the security factory'),
         ]);
 
     $services->set('dbsc.registration_handler', RegistrationHandler::class)
