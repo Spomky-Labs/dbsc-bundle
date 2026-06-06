@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nothing.
 
-## [0.3.0] - 2026-06-06
+## 0.3.0 - 2026-06-06
 
 ### Added
 
@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Corrected the cookie-name guidance: the DBSC spec places no restriction on the bound cookie name, so `__Host-`/`__Secure-` prefixes are allowed (a `__Host-` name requires `secure`, `path=/` and no `domain`, which the defaults satisfy). The default stays the unprefixed `dbsc_session` for the broadest compatibility. The previous "browsers reject prefixed cookies" note (0.2.0) was inaccurate.
 
-## [0.2.0] - 2026-06-05
+## 0.2.0 - 2026-06-05
 
 ### Added
 
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refresh challenge handshake: the challenge is now returned with `403` and the required `id` structured-field parameter (`"<challenge>";id="<session>"`). The previous `401` is a `4xx` that makes the browser terminate the session, so the handshake never completed.
 - The refresh endpoint now terminates the session with a `4xx` on an unknown or expired binding, instead of looping challenges.
 
-## [0.1.0] - 2026-06-05
+## 0.1.0 - 2026-06-05
 
 ### Added
 
