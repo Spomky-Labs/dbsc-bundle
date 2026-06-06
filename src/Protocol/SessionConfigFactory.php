@@ -19,11 +19,14 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
      * @param array{name: string, path: string, domain: ?string, secure: bool, http_only: bool, same_site: string, lifetime: int} $cookie
      * @param list<string> $excludePaths paths kept out of the session scope (e.g. static assets) so
      *                                    their requests never trigger a refresh
+     * @param bool         $includeSite  true emits a site-scoped session (`include_site: true`), false
+     *                                    keeps it origin-scoped
      */
     public function __construct(
         private string $refreshPath,
         private array $cookie,
         private array $excludePaths = [],
+        private bool $includeSite = false,
     ) {
     }
 
@@ -55,7 +58,7 @@ final readonly class SessionConfigFactory implements SessionConfigFactoryInterfa
             'refresh_url' => $this->refreshPath,
             'scope' => [
                 'origin' => $origin,
-                'include_site' => false,
+                'include_site' => $this->includeSite,
                 'scope_specification' => $scopeSpecification,
             ],
             'credentials' => [

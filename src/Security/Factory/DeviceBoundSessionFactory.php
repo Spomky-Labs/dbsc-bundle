@@ -105,6 +105,12 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->end()
             ->defaultValue([])
             ->end()
+            ->booleanNode('include_site')
+            ->info(
+                'Emit a site-scoped session (include_site: true) instead of origin-scoped. Origin-scoped is the safer default.'
+            )
+            ->defaultFalse()
+            ->end()
             ->scalarNode('register')
             ->info('Path of the registration endpoint. Null derives /dbsc/<firewall>/register.')
             ->defaultNull()
@@ -169,6 +175,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $sessionLifetime = $config['session_lifetime'];
         /** @var list<string> $excludePaths */
         $excludePaths = $config['scope_exclude_paths'];
+        /** @var bool $includeSite */
+        $includeSite = $config['include_site'];
         /** @var string|null $bindingRepository */
         $bindingRepository = $config['binding_repository'];
         /** @var string|null $challengeStore */
@@ -212,7 +220,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $container->setDefinition($sessionConfigId, new ChildDefinition('dbsc.session_config_factory'))
             ->replaceArgument(0, $refreshPath)
             ->replaceArgument(1, $cookie)
-            ->replaceArgument(2, $excludePaths);
+            ->replaceArgument(2, $excludePaths)
+            ->replaceArgument(3, $includeSite);
 
         $registrationHandlerId = 'dbsc.registration_handler.' . $firewallName;
         $container->setDefinition($registrationHandlerId, new ChildDefinition('dbsc.registration_handler'))

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `authorization` round-trip: `DeviceBoundSessionBadge::setAuthorization()` makes the bundle emit an `authorization` parameter in the `Secure-Session-Registration` header, bind it to the challenge, and verify the registration proof echoes it back unchanged (spec § 9.10). Lets you tie a registration to a value only your backend can vouch for.
 - `Secure-Session-Skipped`: the bundle now logs (notice level) when a browser reports it skipped DBSC for a session (refresh endpoint unreachable, server error, or quota exceeded), to help spot a misbehaving endpoint.
+- `include_site`: per-firewall option to emit a site-scoped session (`include_site: true`) instead of the origin-scoped default.
 
 ### Changed
 

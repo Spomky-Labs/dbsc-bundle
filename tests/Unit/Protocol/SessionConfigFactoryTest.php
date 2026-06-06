@@ -56,4 +56,25 @@ final class SessionConfigFactoryTest extends TestCase
         static::assertStringContainsString('Secure', (string) $config['credentials'][0]['attributes']);
         static::assertStringContainsString('SameSite=Lax', (string) $config['credentials'][0]['attributes']);
     }
+
+    #[Test]
+    public function itEmitsASiteScopedSessionWhenIncludeSiteIsOn(): void
+    {
+        // Given a factory configured to emit a site-scoped session
+        $factory = new SessionConfigFactory('/dbsc/refresh', [
+            'name' => 'dbsc_session',
+            'lifetime' => 600,
+            'path' => '/',
+            'domain' => null,
+            'secure' => true,
+            'http_only' => true,
+            'same_site' => 'lax',
+        ], [], true);
+
+        // When
+        $config = $factory->create('session-1', 'https://example.com');
+
+        // Then
+        static::assertTrue($config['scope']['include_site']);
+    }
 }

@@ -42,6 +42,8 @@ security:
                 session_lifetime: null
                 # Paths kept out of the session scope so their requests never trigger a refresh.
                 scope_exclude_paths: []
+                # Emit a site-scoped session (include_site: true) instead of origin-scoped.
+                include_site: false
 
                 # Storage (null = per-firewall in-memory, dev/test only)
                 binding_repository: null
@@ -117,6 +119,13 @@ scope_exclude_paths: ['/assets', '/build', '/bundles']
 ```
 
 The refresh endpoint's own path is always excluded by the browser, so you do not need to list it.
+
+### `include_site`
+
+By default the session is origin-scoped (`include_site: false`): it covers only the exact scheme,
+host and port that registered it. Set `include_site: true` to make it site-scoped, so the binding
+also covers subdomains of the same registrable domain. Origin-scoped is the safer default; widen it
+only when sessions legitimately span subdomains.
 
 ### `binding_repository` and `challenge_store`
 
