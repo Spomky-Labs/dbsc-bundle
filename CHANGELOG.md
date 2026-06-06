@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The registration proof's embedded public key is now read from the `jwk` protected header first (the current draft), falling back to the legacy `key` payload claim for compatibility.
 
+### Fixed
+
+- Corrected the cookie-name guidance: the DBSC spec places no restriction on the bound cookie name, so `__Host-`/`__Secure-` prefixes are allowed (a `__Host-` name requires `secure`, `path=/` and no `domain`, which the defaults satisfy). The default stays the unprefixed `dbsc_session` for the broadest compatibility. The previous "browsers reject prefixed cookies" note (0.2.0) was inaccurate.
+
 ## [0.2.0] - 2026-06-05
 
 ### Added

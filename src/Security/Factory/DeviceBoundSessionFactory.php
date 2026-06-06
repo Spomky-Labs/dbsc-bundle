@@ -118,7 +118,7 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->children()
             ->scalarNode('name')
             ->info(
-                'Name of the short-lived device-bound cookie. Do not use a __Host-/__Secure- prefix: browsers reject prefixed cookies as DBSC bound credentials.'
+                'Name of the short-lived device-bound cookie. The spec allows a __Host-/__Secure- prefix (e.g. __Host-dbsc_session); a __Host- name additionally requires secure=true, path=/ and no domain. The default stays unprefixed for the broadest compatibility — set a prefixed name explicitly if you want those guarantees.'
             )
             ->defaultValue('dbsc_session')
             ->end()

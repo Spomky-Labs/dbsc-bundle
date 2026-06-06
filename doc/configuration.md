@@ -130,10 +130,11 @@ The attributes of the short-lived device-bound cookie. `lifetime` controls how o
 refreshes; a short value (a few minutes) is typical. Keep `secure: true`, `http_only: true` and an
 appropriate `same_site`.
 
-> **Do not use a cookie-prefix name.** A `__Host-` or `__Secure-` prefixed cookie is **rejected by
-> the browser as a DBSC bound credential** (registration silently fails and no session is
-> established). Use a plain name such as the default `dbsc_session`; the cookie is still `Secure`,
-> `HttpOnly` and `SameSite`, and DBSC adds the device binding on top.
+> **Cookie-prefix names are allowed.** The DBSC specification places no restriction on the bound
+> cookie name, so a `__Host-` or `__Secure-` prefix is fine (e.g. `__Host-dbsc_session`). A `__Host-`
+> name additionally requires `secure: true`, `path: /` and no `domain` — the bundle's defaults
+> already satisfy that. The default stays the unprefixed `dbsc_session` for the broadest
+> compatibility; set a prefixed name explicitly if you want the extra browser-enforced guarantees.
 
 ## Logout
 
