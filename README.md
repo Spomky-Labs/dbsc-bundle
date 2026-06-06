@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.svg" alt="DBSC Bundle logo" width="128" height="128"></p>
+<p align="center"><img src="doc/logo.svg" alt="DBSC Bundle logo" width="128" height="128"></p>
 
 # DBSC Bundle
 
