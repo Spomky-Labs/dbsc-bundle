@@ -132,3 +132,30 @@ in [Additive mode](additive-mode.md#access-control-for-the-endpoints).
 
 Proofs are JWS signed with `ES256` or `RS256` by default. The accepted set is configurable and is
 resolved from algorithms registered as services; see [Extending the bundle](extending.md#algorithms).
+
+### Unbound sessions: the `none` algorithm
+
+The specification lets a server list `none` among the accepted algorithms. A browser that cannot
+bind a key to hardware (no TPM or Secure Enclave, or a software-key fallback) may then register
+with an **unsigned** proof (`alg: none`, empty signature, no `jwk` header) and refresh the same
+way. Such a session gets the session-management side of DBSC (short cookie, refresh cadence,
+`continue: false`, logout cleanup) but **no cookie-theft protection**: nothing prevents a stolen
+cookie from being refreshed elsewhere.
+
+It is therefore off by default and enabled per firewall only by listing it explicitly:
+
+```yaml
+device_bound_session:
+    algorithms: ['ES256', 'RS256', 'none']
+```
+
+When enabled, the registration header advertises it (`(ES256 RS256 none)`), an unsigned proof that
+still embeds a key is rejected, and the binding is recorded with the placeholder key
+`{"kty": "none"}`. The bundle keeps unbound and bound sessions strictly apart: the key type is
+checked against the proof algorithm before verification, so an unsigned proof never refreshes a
+device-bound session, and a signed proof never refreshes an unbound one.
+
+To tell them apart in the application, use `SessionBinding::isDeviceBound()` on the stored binding,
+or, in replacement mode, `DeviceBoundSessionToken::isDeviceBound()` on the security token, e.g. in
+a voter that requires a device-bound session for sensitive actions. The web profiler flags unbound
+bindings.

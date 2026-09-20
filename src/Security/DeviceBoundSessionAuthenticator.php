@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SpomkyLabs\DbscBundle\Security;
 
+use SpomkyLabs\DbscBundle\Session\SessionBinding;
 use SpomkyLabs\DbscBundle\Session\SessionBindingRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -30,6 +31,12 @@ use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPasspor
  */
 final class DeviceBoundSessionAuthenticator extends AbstractAuthenticator
 {
+    /**
+     * Passport attribute carrying the resolved {@see SessionBinding} from authenticate() to
+     * createToken().
+     */
+    private const BINDING_ATTRIBUTE = 'dbsc.binding';
+
     /**
      * @param UserProviderInterface<UserInterface> $userProvider
      */
@@ -63,18 +70,25 @@ final class DeviceBoundSessionAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('Invalid device-bound session.');
         }
 
-        return new SelfValidatingPassport(
+        $passport = new SelfValidatingPassport(
             new UserBadge($binding->userIdentifier, $this->userProvider->loadUserByIdentifier(...)),
         );
+        $passport->setAttribute(self::BINDING_ATTRIBUTE, $binding);
+
+        return $passport;
     }
 
     /**
      * Produces a remembered-level token: a device-bound re-authentication grants
-     * IS_AUTHENTICATED_REMEMBERED, never IS_AUTHENTICATED_FULLY.
+     * IS_AUTHENTICATED_REMEMBERED, never IS_AUTHENTICATED_FULLY. The token records whether the
+     * session is actually device-bound (see {@see DeviceBoundSessionToken::isDeviceBound()}).
      */
     public function createToken(Passport $passport, string $firewallName): TokenInterface
     {
-        return new DeviceBoundSessionToken($passport->getUser(), $firewallName);
+        $binding = $passport->getAttribute(self::BINDING_ATTRIBUTE);
+        $deviceBound = $binding instanceof SessionBinding && $binding->isDeviceBound();
+
+        return new DeviceBoundSessionToken($passport->getUser(), $firewallName, $deviceBound);
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): null

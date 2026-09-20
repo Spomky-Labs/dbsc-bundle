@@ -6,7 +6,9 @@ namespace SpomkyLabs\DbscBundle\Tests\Unit\Security;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use SpomkyLabs\DbscBundle\Jwt\DeviceProof;
 use SpomkyLabs\DbscBundle\Security\DeviceBoundSessionAuthenticator;
+use SpomkyLabs\DbscBundle\Security\DeviceBoundSessionToken;
 use SpomkyLabs\DbscBundle\Session\InMemorySessionBindingRepository;
 use SpomkyLabs\DbscBundle\Session\SessionBinding;
 use Symfony\Component\HttpFoundation\Request;
@@ -62,6 +64,43 @@ final class DeviceBoundSessionAuthenticatorTest extends TestCase
 
         // Then the user bound to the cookie is resolved from the firewall's provider
         static::assertSame('alice', $passport->getUser()->getUserIdentifier());
+    }
+
+    #[Test]
+    public function itFlagsTheTokenAsDeviceBoundForABoundSession(): void
+    {
+        // Given a binding with a real device key
+        $repository = new InMemorySessionBindingRepository();
+        $repository->save(new SessionBinding('sid', [
+            'kty' => 'EC',
+        ], 'alice', 1_000, 'tok-1'));
+        $authenticator = $this->createAuthenticator($repository);
+
+        // When
+        $passport = $authenticator->authenticate($this->requestWithCookie('tok-1'));
+        $token = $authenticator->createToken($passport, 'main');
+
+        // Then
+        static::assertInstanceOf(DeviceBoundSessionToken::class, $token);
+        static::assertTrue($token->isDeviceBound());
+    }
+
+    #[Test]
+    public function itFlagsTheTokenAsUnboundForASessionRegisteredWithNone(): void
+    {
+        // Given a binding recorded with the "none" placeholder key
+        $repository = new InMemorySessionBindingRepository();
+        $repository->save(new SessionBinding('sid', DeviceProof::UNBOUND_KEY, 'alice', 1_000, 'tok-1'));
+        $authenticator = $this->createAuthenticator($repository);
+
+        // When
+        $passport = $authenticator->authenticate($this->requestWithCookie('tok-1'));
+        $token = $authenticator->createToken($passport, 'main');
+
+        // Then the application can tell the session carries no cookie-theft protection
+        static::assertInstanceOf(DeviceBoundSessionToken::class, $token);
+        static::assertFalse($token->isDeviceBound());
+        static::assertFalse(unserialize(serialize($token))->isDeviceBound());
     }
 
     #[Test]

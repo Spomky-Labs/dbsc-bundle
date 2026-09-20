@@ -14,7 +14,8 @@ use SpomkyLabs\DbscBundle\Exception\InvalidProofException;
  *
  * Algorithms are discovered dynamically: any tagged {@see Algorithm} service becomes
  * available, and the per-firewall `algorithms` configuration selects which ones are accepted.
- * DBSC mandates ES256 and RS256.
+ * DBSC mandates ES256 and RS256; `none` (unsigned proofs from a browser that cannot bind a key)
+ * is accepted only when listed explicitly.
  */
 final class AlgorithmProvider implements AlgorithmProviderInterface
 {

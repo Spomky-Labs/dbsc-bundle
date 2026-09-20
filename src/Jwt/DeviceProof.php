@@ -14,6 +14,15 @@ use function is_string;
 final readonly class DeviceProof
 {
     /**
+     * The placeholder key recorded for a session registered with the `none` algorithm: the
+     * browser could not bind a key, the proof is unsigned and the session is not device-bound.
+     * It is the JWK the `none` JWS algorithm expects, so the same verifier path applies.
+     */
+    public const UNBOUND_KEY = [
+        'kty' => 'none',
+    ];
+
+    /**
      * @param Jwk                  $publicKeyJwk the device public key (embedded on registration, stored thereafter)
      * @param array<string, mixed> $claims       the decoded JWS payload
      */
@@ -21,6 +30,15 @@ final readonly class DeviceProof
         public array $publicKeyJwk,
         public array $claims,
     ) {
+    }
+
+    /**
+     * False for a proof made with the `none` algorithm, i.e. a session that is not bound to a
+     * device key.
+     */
+    public function isDeviceBound(): bool
+    {
+        return ($this->publicKeyJwk['kty'] ?? null) !== self::UNBOUND_KEY['kty'];
     }
 
     /**

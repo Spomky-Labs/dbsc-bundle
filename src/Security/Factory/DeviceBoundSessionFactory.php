@@ -74,7 +74,9 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->defaultFalse()
             ->end()
             ->arrayNode('algorithms')
-            ->info('Accepted JWS signature algorithms for the device-bound key. DBSC mandates ES256 and RS256.')
+            ->info(
+                'Accepted JWS signature algorithms for the device-bound key. DBSC mandates ES256 and RS256. Adding "none" accepts unbound sessions from browsers that cannot hold a device key: they get DBSC session management but NO cookie-theft protection (see SessionBinding::isDeviceBound()).'
+            )
             ->scalarPrototype()
             ->end()
             ->defaultValue(['ES256', 'RS256'])
