@@ -9,7 +9,8 @@ namespace SpomkyLabs\DbscBundle\Challenge;
  *
  * On registration the challenge also carries the optional `authorization` value emitted in the
  * `Secure-Session-Registration` header, so the proof can be checked to echo it back exactly as
- * the spec requires.
+ * the spec requires, and the optional `provider_key` thumbprint of a federated registration, so
+ * the proof can be checked to embed that very key.
  */
 final readonly class Challenge
 {
@@ -18,6 +19,7 @@ final readonly class Challenge
         public int $expiresAt,
         public ?string $sessionIdentifier = null,
         public ?string $authorization = null,
+        public ?string $providerKey = null,
     ) {
     }
 

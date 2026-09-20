@@ -13,6 +13,7 @@ use SpomkyLabs\DbscBundle\Challenge\InMemoryChallengeStore;
 use SpomkyLabs\DbscBundle\EventListener\RegistrationHeaderListener;
 use SpomkyLabs\DbscBundle\Http\SecureSessionHeaders;
 use SpomkyLabs\DbscBundle\Jwt\AlgorithmProvider;
+use SpomkyLabs\DbscBundle\Protocol\SessionProvider;
 use SpomkyLabs\DbscBundle\Security\DeviceBoundSessionBadge;
 use SpomkyLabs\DbscBundle\Tests\FixedClock;
 use Symfony\Component\HttpFoundation\Response;
@@ -85,6 +86,48 @@ final class RegistrationHeaderListenerTest extends TestCase
     }
 
     #[Test]
+    public function itEmitsTheProviderParametersAndBindsTheKeyToTheChallenge(): void
+    {
+        // Given an enabled badge naming a session provider to share a key with
+        $response = new Response();
+        $passport = new SelfValidatingPassport(new UserBadge('alice'));
+        $passport->addBadge((new DeviceBoundSessionBadge())->enable()->setProvider(
+            new SessionProvider('https://idp.example', 'idp-session-1', 'thumb-abc'),
+        ));
+        $clock = new FixedClock(new DateTimeImmutable('2026-01-01T00:00:00+00:00'));
+        $store = new InMemoryChallengeStore($clock);
+
+        // When
+        $this->listener(store: $store, clock: $clock)
+            ->onLoginSuccess($this->event($passport, $response));
+
+        // Then the header carries the three provider parameters and the challenge expects that key
+        $header = (string) $response->headers->get(SecureSessionHeaders::REGISTRATION);
+        static::assertStringContainsString(
+            ';provider_key="thumb-abc";provider_session_id="idp-session-1";provider_url="https://idp.example"',
+            $header,
+        );
+        preg_match('/challenge="([^"]+)"/', $header, $matches);
+        static::assertSame('thumb-abc', $store->get($matches[1])?->providerKey);
+    }
+
+    #[Test]
+    public function itOmitsTheProviderParametersWithoutAProvider(): void
+    {
+        // Given an enabled badge without a provider
+        $response = new Response();
+        $passport = new SelfValidatingPassport(new UserBadge('alice'));
+        $passport->addBadge((new DeviceBoundSessionBadge())->enable());
+
+        // When
+        $this->listener()
+            ->onLoginSuccess($this->event($passport, $response));
+
+        // Then
+        static::assertStringNotContainsString('provider_', (string) $response->headers->get(SecureSessionHeaders::REGISTRATION));
+    }
+
+    #[Test]
     public function itDoesNotEmitWhenTheBadgeIsPresentButDisabled(): void
     {
         // Given a login passport whose badge was not enabled by the conditions
@@ -115,10 +158,10 @@ final class RegistrationHeaderListenerTest extends TestCase
         static::assertFalse($response->headers->has(SecureSessionHeaders::REGISTRATION));
     }
 
-    private function listener(): RegistrationHeaderListener
+    private function listener(?InMemoryChallengeStore $store = null, ?FixedClock $clock = null): RegistrationHeaderListener
     {
-        $clock = new FixedClock(new DateTimeImmutable('2026-01-01T00:00:00+00:00'));
-        $challengeManager = new ChallengeManager(new InMemoryChallengeStore($clock), $clock, 300);
+        $clock ??= new FixedClock(new DateTimeImmutable('2026-01-01T00:00:00+00:00'));
+        $challengeManager = new ChallengeManager($store ?? new InMemoryChallengeStore($clock), $clock, 300);
         $algorithmProvider = new AlgorithmProvider([new ES256()], ['ES256']);
 
         return new RegistrationHeaderListener($challengeManager, $algorithmProvider, '/dbsc/register');

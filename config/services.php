@@ -190,7 +190,7 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set(DbscRouteLoader::class)
         ->autowire(false)
-        ->args([param('dbsc.firewalls')])
+        ->args([param('dbsc.firewalls'), abstract_arg('well-known flag, set by the extension')])
         ->tag('routing.loader');
 
     $services->set(DbscDataCollector::class)

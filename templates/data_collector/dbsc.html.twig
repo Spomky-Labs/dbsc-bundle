@@ -172,6 +172,14 @@
                             <tr><th>Challenge</th><td>{{ collector.registration.challenge ?? '(none)' }}</td></tr>
                             <tr><th>Registration path</th><td>{{ collector.registration.path ? ('<code>' ~ collector.registration.path ~ '</code>')|raw : '(none)' }}</td></tr>
                             <tr><th>Authorization</th><td>{{ collector.registration.authorization ?? '(none)' }}</td></tr>
+                            <tr>
+                                <th>Session provider (key sharing)</th>
+                                <td>
+                                    {% if collector.registration.provider_url %}
+                                        <code>{{ collector.registration.provider_url }}</code>, session <code>{{ collector.registration.provider_session_id }}</code>, key <code>{{ collector.registration.provider_key }}</code>
+                                    {% else %}(none){% endif %}
+                                </td>
+                            </tr>
                         {% else %}
                             <tr><th>Challenge</th><td>(none)</td></tr>
                         {% endif %}

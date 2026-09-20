@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SpomkyLabs\DbscBundle\Security;
 
+use SpomkyLabs\DbscBundle\Protocol\SessionProvider;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\BadgeInterface;
 
 /**
@@ -25,6 +26,13 @@ final class DeviceBoundSessionBadge implements BadgeInterface
      * it back in the registration proof, where the bundle checks it matches.
      */
     private ?string $authorization = null;
+
+    /**
+     * Optional session provider whose device key this registration should share (federated
+     * sessions). Emitted as the `provider_*` registration parameters; the registration proof is
+     * then required to embed the key with the announced thumbprint.
+     */
+    private ?SessionProvider $provider = null;
 
     public function enable(): static
     {
@@ -55,6 +63,18 @@ final class DeviceBoundSessionBadge implements BadgeInterface
     public function getAuthorization(): ?string
     {
         return $this->authorization;
+    }
+
+    public function setProvider(?SessionProvider $provider): static
+    {
+        $this->provider = $provider;
+
+        return $this;
+    }
+
+    public function getProvider(): ?SessionProvider
+    {
+        return $this->provider;
     }
 
     public function isResolved(): bool

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SpomkyLabs\DbscBundle\Session;
 
+use SpomkyLabs\DbscBundle\Jwt\JwkThumbprint;
+
 /**
  * The association between a DBSC session and the device-bound public key that must sign
  * every refresh. This is the record an attacker cannot forge without the TPM-held private key.
@@ -22,6 +24,16 @@ final readonly class SessionBinding
         public ?int $createdAt = null,
         public ?string $cookieToken = null,
     ) {
+    }
+
+    /**
+     * SHA-256 JWK thumbprint of the device key. A session provider hands it, with the session
+     * identifier, to a relying party that wants to register a session sharing this key (the
+     * `provider_key` / `provider_session_id` registration parameters).
+     */
+    public function keyThumbprint(): string
+    {
+        return JwkThumbprint::sha256($this->publicKeyJwk);
     }
 
     /**

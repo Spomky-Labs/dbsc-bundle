@@ -44,6 +44,12 @@ return static function (ContainerConfigurator $container): void {
         ],
     ]);
 
+    $container->extension('dbsc', [
+        'federation' => [
+            'relying_origins' => ['https://rp.example'],
+        ],
+    ]);
+
     $container->extension('security', [
         'providers' => [
             'in_memory' => [

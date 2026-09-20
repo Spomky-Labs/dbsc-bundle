@@ -24,6 +24,15 @@ final readonly class DeviceProof
     }
 
     /**
+     * SHA-256 JWK thumbprint of the device key, the identifier a relying party matches against
+     * the `provider_key` it requested.
+     */
+    public function keyThumbprint(): string
+    {
+        return JwkThumbprint::sha256($this->publicKeyJwk);
+    }
+
+    /**
      * The challenge the browser signed (`jti` claim).
      */
     public function challenge(): string

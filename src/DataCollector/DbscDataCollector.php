@@ -167,14 +167,21 @@ final class DbscDataCollector implements DataCollectorInterface
      * The registration header parsed into its components, or null when no registration was offered.
      * Defaults gracefully so profiles collected before this key existed stay viewable.
      *
-     * @return array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null}|null
+     * @return array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null, provider_url: string|null, provider_session_id: string|null, provider_key: string|null}|null
      */
     public function getRegistration(): ?array
     {
         /** @var array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null}|null $registration */
         $registration = $this->data['registration'] ?? null;
+        if ($registration === null) {
+            return null;
+        }
 
-        return $registration;
+        return $registration + [
+            'provider_url' => null,
+            'provider_session_id' => null,
+            'provider_key' => null,
+        ];
     }
 
     public function getSkipped(): ?string
@@ -426,7 +433,7 @@ final class DbscDataCollector implements DataCollectorInterface
     /**
      * Parses the registration header into its components for display.
      *
-     * @return array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null}
+     * @return array{algorithms: list<string>, challenge: string|null, path: string|null, authorization: string|null, provider_url: string|null, provider_session_id: string|null, provider_key: string|null}
      */
     private function parseRegistration(string $header): array
     {
@@ -442,6 +449,9 @@ final class DbscDataCollector implements DataCollectorInterface
             'challenge' => $this->extractAttribute($header, 'challenge'),
             'path' => $this->extractAttribute($header, 'path'),
             'authorization' => $this->extractAttribute($header, 'authorization'),
+            'provider_url' => $this->extractAttribute($header, 'provider_url'),
+            'provider_session_id' => $this->extractAttribute($header, 'provider_session_id'),
+            'provider_key' => $this->extractAttribute($header, 'provider_key'),
         ];
     }
 
