@@ -1,7 +1,7 @@
 # Security Release Process
 
 Spomky-Labs is devoted in providing the best experience for all developers.
-We has adopted this security disclosure and response policy to ensure we responsibly handle critical issues.
+We have adopted this security disclosure and response policy to ensure we responsibly handle critical issues.
 
 ## Supported Versions
 
@@ -20,7 +20,7 @@ If you know of a publicly disclosed security vulnerability, please **IMMEDIATELY
 
 To report a vulnerability or a security-related issue, please email the private address security@spomky-labs.com with the details of the vulnerability.
 The email will be fielded by the Security Team, which is made up of the maintainers and main contributors who have committer and release permissions.
-Do not report non-security-impacting bugs through this channel. Use [GitHub issues](https://github.com/spomky-labs/phpwa/issues/new/choose) instead.
+Do not report non-security-impacting bugs through this channel. Use [GitHub issues](https://github.com/spomky-labs/dbsc-bundle/issues/new/choose) instead.
 
 Emails can be encrypted if you wish to share the vulnerability details securely.
 The Security Team's PGP is key is available on the [PGP keyservers](https://keys.openpgp.org/search?q=security%40spomky-labs.com).
@@ -32,7 +32,7 @@ Provide a descriptive subject line and in the body of the email include the foll
 -   Basic identity information, such as your name and your affiliation or company.
 -   Detailed steps to reproduce the vulnerability (POC scripts, screenshots, and compressed packet captures are all helpful to us).
 -   Description of the effects of the vulnerability and the related hardware and software configurations, so that the Security Team can reproduce it.
--   How the vulnerability affects Webauthn Framework usage and an estimation of the attack surface, if there is one.
+-   How the vulnerability affects DBSC Bundle usage and an estimation of the attack surface, if there is one.
 -   List other projects or dependencies that were used to produce the vulnerability.
 
 ## When to report a vulnerability
@@ -55,7 +55,7 @@ The Security Team will respond to vulnerability reports as follows:
 
 ### Public Disclosure Process
 
-The Security Team publishes a public [advisory](https://github.com/spomky-labs/phpwa/security/advisories) to the community via GitHub. In most cases, additional communication via Twitter, blog and other channels will assist in educating users and rolling out the patched release to affected users.
+The Security Team publishes a public [advisory](https://github.com/spomky-labs/dbsc-bundle/security/advisories) to the community via GitHub. In most cases, additional communication via Twitter, blog and other channels will assist in educating users and rolling out the patched release to affected users.
 
 The Security Team will also publish any mitigating steps users can take until the fix can be applied to their instances. Distributors will handle creating and publishing their own security advisories.
 

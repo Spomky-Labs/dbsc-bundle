@@ -42,6 +42,6 @@ final readonly class DeviceBoundSessionConditionsListener
     {
         $value = $request->request->get($this->checkbox, $request->query->get($this->checkbox));
 
-        return filter_var($value, FILTER_VALIDATE_BOOL) === true;
+        return filter_var($value, FILTER_VALIDATE_BOOL);
     }
 }

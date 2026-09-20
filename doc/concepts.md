@@ -43,11 +43,12 @@ HttpOnly, SameSite, strong login).
 
 ## Browser support and graceful degradation
 
-DBSC is driven by the browser and is, at the time of writing, mostly available in desktop
-Chrome behind an origin trial. A browser that does not understand the
-`Secure-Session-Registration` header simply ignores it, and the application keeps working
-exactly as before. Adopting the bundle therefore carries no regression risk for unsupported
-clients.
+DBSC is driven by the browser. It is generally available in desktop Chrome: from Chrome 146 on
+Windows (keys held in the TPM) and from Chrome 147 on macOS (keys held in the Secure Enclave),
+both through a gradual rollout. Other platforms and browsers do not support it yet. A browser
+that does not understand the `Secure-Session-Registration` header simply ignores it, and the
+application keeps working exactly as before. Adopting the bundle therefore carries no regression
+risk for unsupported clients.
 
 ## Scope
 

@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Nothing.
+- Documentation now reflects that DBSC is generally available in Chrome (146+ on Windows, 147+ on macOS) rather than an origin-trial feature; the protocol implemented by the bundle (`Secure-Session-*` headers, `jwk` protected header, `403` challenge with `id`, `continue: false`, `Secure-Session-Skipped`, `allowed_refresh_initiators`) matches the current editor's draft.
+- Composer branch alias, supported-versions table and security policy links now point at this project and its maintained release branches.
 
 ### Deprecated
 
@@ -25,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Nothing.
+- `web-token/jwt-library` now requires `^4.2`: releases before 4.0.7/4.1.7 carry a `JWSVerifier` algorithm-confusion advisory (GHSA-jc38-x7x8-2xc8) among others, and the bundle relies on that verifier for every device proof.
+- QA tooling: the ECS configuration no longer imports the `PHPUNIT`, `SYMPLIFY` and `STRICT` sets removed in ECS 13 (the strict fixers are registered individually) and uses the fluent configuration API; Castor defines `CASTOR_USE_CHDIR`.
 
 ## 0.3.0 - 2026-06-06
 

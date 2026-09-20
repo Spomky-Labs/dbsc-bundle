@@ -46,7 +46,7 @@
         "symfony/security-bundle": "^7.4|^8.0",
         "symfony/security-core": "^7.4|^8.0",
         "symfony/security-http": "^7.4|^8.0",
-        "web-token/jwt-library": "^4.0"
+        "web-token/jwt-library": "^4.2"
     },
     "require-dev": {
         "symfony/framework-bundle": "^7.4|^8.0"
@@ -59,7 +59,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-0.1.x": "0.1.x-dev"
+            "dev-0.4.x": "0.4.x-dev"
         },
         "thanks": {
             "name": "spomky-labs/dbsc-bundle",

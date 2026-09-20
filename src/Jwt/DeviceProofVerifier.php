@@ -144,8 +144,8 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
     }
 
     /**
-     * Extracts the public key the browser embedded in a registration proof. The current DBSC
-     * draft carries it as a `jwk` protected header; an older revision used a `key` payload claim,
+     * Extracts the public key the browser embedded in a registration proof. The DBSC specification
+     * carries it as a `jwk` protected header; an earlier revision used a `key` payload claim,
      * still accepted as a fallback for compatibility.
      *
      * @param array<string, mixed> $claims

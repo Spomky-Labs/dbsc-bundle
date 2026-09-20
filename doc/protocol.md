@@ -1,9 +1,9 @@
 # Protocol and endpoints
 
 The bundle implements the server side of DBSC. The browser performs the cryptography; the server
-emits one header and answers two endpoints. Header names follow the current draft
-(`Secure-Session-*` and `Sec-Secure-Session-*`); they are exposed as constants on
-`SpomkyLabs\DbscBundle\Http\SecureSessionHeaders`.
+emits one header and answers two endpoints. Header names follow the current specification
+(`Secure-Session-*` and `Sec-Secure-Session-*`, as shipped by Chrome); they are exposed as
+constants on `SpomkyLabs\DbscBundle\Http\SecureSessionHeaders`.
 
 ## 1. Registration header (at login)
 
@@ -43,8 +43,8 @@ Secure-Session-Response: <JWS>
 
 The browser sends the proof in the `Secure-Session-Response` header (the request body is empty).
 It is a JWS with `typ: dbsc+jwt`, signed by the freshly generated device key, whose public part it
-embeds in a `jwk` protected header (an older draft used a `key` payload claim, still accepted as a
-fallback). The `jti` claim carries the challenge from the registration header.
+embeds in a `jwk` protected header (an earlier revision of the specification used a `key` payload
+claim, still accepted as a fallback). The `jti` claim carries the challenge from the registration header.
 
 The server verifies the signature against the embedded key (proof of possession) and, when the
 proof carries an `aud` claim, checks it matches the endpoint URL the request was sent to (a missing
