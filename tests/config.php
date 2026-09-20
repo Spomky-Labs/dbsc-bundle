@@ -73,6 +73,7 @@ return static function (ContainerConfigurator $container): void {
                 'provider' => 'in_memory',
                 'device_bound_session' => [
                     'authenticate' => true,
+                    'preprovision_challenge' => true,
                 ],
             ],
             'main' => [

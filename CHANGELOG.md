@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Nothing.
+- `preprovision_challenge`: per-firewall option attaching the next refresh challenge (`Secure-Session-Challenge` with the session `id`) to successful registration and refresh responses, so a supporting browser signs it directly and skips the unsigned request and its `403` on the next refresh. Pre-provisioned challenges live `cookie.lifetime + challenge_ttl` seconds. Off by default. The `ChallengePreprovisionerInterface` is the extension point; `ChallengeManagerInterface::issue()` accepts an optional TTL override.
 
 ### Changed
 

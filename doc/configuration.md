@@ -35,6 +35,10 @@ security:
                 algorithms: ['ES256', 'RS256']
                 # Lifetime of a single-use challenge, in seconds.
                 challenge_ttl: 300
+                # Attach the next refresh challenge to successful registration/refresh responses,
+                # so the browser skips the unsigned request and its 403 on the next refresh.
+                # Each such challenge lives cookie.lifetime + challenge_ttl seconds in the store.
+                preprovision_challenge: false
 
                 # Lifetimes
                 # Lifetime of the credential (the binding), in seconds, independent of the cookie.

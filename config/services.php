@@ -24,6 +24,8 @@ use SpomkyLabs\DbscBundle\EventListener\SecureSessionSkippedListener;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactory;
 use SpomkyLabs\DbscBundle\Jwt\AlgorithmProvider;
 use SpomkyLabs\DbscBundle\Jwt\DeviceProofVerifier;
+use SpomkyLabs\DbscBundle\Protocol\ChallengePreprovisioner;
+use SpomkyLabs\DbscBundle\Protocol\NullChallengePreprovisioner;
 use SpomkyLabs\DbscBundle\Protocol\RefreshHandler;
 use SpomkyLabs\DbscBundle\Protocol\RegistrationHandler;
 use SpomkyLabs\DbscBundle\Protocol\SessionConfigFactory;
@@ -134,6 +136,17 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('session lifetime, set by the security factory'),
         ]);
 
+    $services->set('dbsc.challenge_preprovisioner', ChallengePreprovisioner::class)
+        ->abstract()
+        ->args([
+            abstract_arg('challenge manager, set by the security factory'),
+            abstract_arg('bound cookie lifetime, set by the security factory'),
+            abstract_arg('grace (challenge ttl), set by the security factory'),
+        ]);
+
+    $services->set('dbsc.null_challenge_preprovisioner', NullChallengePreprovisioner::class)
+        ->abstract();
+
     $services->set('dbsc.registration_controller', RegistrationController::class)
         ->abstract()
         ->args([
@@ -141,6 +154,9 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('bound cookie factory, set by the security factory'),
             service('security.token_storage'),
             service('clock'),
+            service('logger')
+->nullOnInvalid(),
+            abstract_arg('challenge preprovisioner, set by the security factory'),
         ]);
 
     $services->set('dbsc.refresh_controller', RefreshController::class)
@@ -151,6 +167,9 @@ return static function (ContainerConfigurator $container): void {
             abstract_arg('bound cookie factory, set by the security factory'),
             service('clock'),
             abstract_arg('session config factory, set by the security factory'),
+            service('logger')
+->nullOnInvalid(),
+            abstract_arg('challenge preprovisioner, set by the security factory'),
         ]);
 
     $services->set('dbsc.security.conditions_listener', DeviceBoundSessionConditionsListener::class)

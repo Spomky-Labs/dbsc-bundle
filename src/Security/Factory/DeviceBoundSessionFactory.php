@@ -91,6 +91,12 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->info('Lifetime of a single-use challenge, in seconds.')
             ->defaultValue(300)
             ->end()
+            ->booleanNode('preprovision_challenge')
+            ->info(
+                'Attach the next refresh challenge (Secure-Session-Challenge) to successful registration and refresh responses, so the browser skips the unsigned request and its 403 on the next refresh. Each challenge lives cookie.lifetime + challenge_ttl seconds in the challenge store.'
+            )
+            ->defaultFalse()
+            ->end()
             ->integerNode('session_lifetime')
             ->info(
                 'Lifetime of the device-bound credential (the binding), in seconds, independent of the cookie. Null never expires.'
@@ -180,6 +186,8 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
         $cookie = $config['cookie'];
         /** @var int $challengeTtl */
         $challengeTtl = $config['challenge_ttl'];
+        /** @var bool $preprovisionChallenge */
+        $preprovisionChallenge = $config['preprovision_challenge'];
         /** @var int|null $sessionLifetime */
         $sessionLifetime = $config['session_lifetime'];
         /** @var list<string> $excludePaths */
@@ -250,10 +258,21 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->replaceArgument(3, new Reference($sessionConfigId))
             ->replaceArgument(6, $sessionLifetime);
 
+        $preprovisionerId = 'dbsc.challenge_preprovisioner.' . $firewallName;
+        if ($preprovisionChallenge) {
+            $container->setDefinition($preprovisionerId, new ChildDefinition('dbsc.challenge_preprovisioner'))
+                ->replaceArgument(0, new Reference($challengeManagerId))
+                ->replaceArgument(1, $cookie['lifetime'])
+                ->replaceArgument(2, $challengeTtl);
+        } else {
+            $container->setDefinition($preprovisionerId, new ChildDefinition('dbsc.null_challenge_preprovisioner'));
+        }
+
         $registrationControllerId = 'dbsc.registration_controller.' . $firewallName;
         $container->setDefinition($registrationControllerId, new ChildDefinition('dbsc.registration_controller'))
             ->replaceArgument(0, new Reference($registrationHandlerId))
             ->replaceArgument(1, new Reference($cookieFactoryId))
+            ->replaceArgument(5, new Reference($preprovisionerId))
             ->addTag('controller.service_arguments');
 
         $refreshControllerId = 'dbsc.refresh_controller.' . $firewallName;
@@ -262,6 +281,7 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             ->replaceArgument(1, new Reference($challengeManagerId))
             ->replaceArgument(2, new Reference($cookieFactoryId))
             ->replaceArgument(4, new Reference($sessionConfigId))
+            ->replaceArgument(6, new Reference($preprovisionerId))
             ->addTag('controller.service_arguments');
 
         $dispatcher = 'security.event_dispatcher.' . $firewallName;
@@ -313,6 +333,7 @@ final class DeviceBoundSessionFactory implements AuthenticatorFactoryInterface
             'cookie' => $cookie,
             'algorithms' => $algorithms,
             'challenge_ttl' => $challengeTtl,
+            'preprovision_challenge' => $preprovisionChallenge,
             'session_lifetime' => $sessionLifetime,
             'authenticate' => $config['authenticate'] === true,
             'always' => $config['always'] === true,

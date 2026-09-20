@@ -104,6 +104,27 @@ The server verifies the signature against the stored public key, consumes the ch
 the cookie token and responds with the same session configuration document and a new
 `Set-Cookie`. The browser then resumes the request it had deferred.
 
+### Pre-provisioned challenges
+
+The browser caches a `Secure-Session-Challenge` received on *any* response for the session named
+in its `id` parameter and, on the next refresh, signs it right away instead of sending the unsigned
+first request. With `preprovision_challenge: true` the bundle attaches the next challenge to every
+successful registration and refresh response, so a refresh costs a single request:
+
+```
+HTTP/1.1 200 OK
+Set-Cookie: dbsc_session=<token>; Max-Age=600; Path=/; Secure; HttpOnly; SameSite=Lax
+Secure-Session-Challenge: "<next value>";id="<session_identifier>"
+
+{ ...session configuration... }
+```
+
+The browser only uses the cached challenge once the cookie expires, so these challenges are issued
+with a lifetime of `cookie.lifetime + challenge_ttl` seconds (instead of `challenge_ttl`) and stay in
+the challenge store that long; a browser that lost its cached challenge simply falls back to the
+`403` path above. It is off by default because it grows the challenge store by one entry per active
+session.
+
 An invalid or stale proof is answered with a fresh challenge (`403`) so the browser retries.
 Termination comes in two flavours. An **unknown** session (revoked, or cleaned up at logout) is
 answered with a terminating `4xx` (`401`): the browser ends the session and stops refreshing, and

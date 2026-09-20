@@ -9,7 +9,11 @@ namespace SpomkyLabs\DbscBundle\Challenge;
  */
 interface ChallengeManagerInterface
 {
-    public function issue(?string $sessionIdentifier = null, ?string $authorization = null): Challenge;
+    /**
+     * Issues a single-use challenge. `$ttl` overrides the configured lifetime, in seconds, for
+     * challenges that must outlive it (e.g. one pre-provisioned for the next refresh).
+     */
+    public function issue(?string $sessionIdentifier = null, ?string $authorization = null, ?int $ttl = null): Challenge;
 
     /**
      * Validates and consumes a presented challenge so it cannot be replayed, returning the

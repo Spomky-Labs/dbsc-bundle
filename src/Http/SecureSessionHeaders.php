@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SpomkyLabs\DbscBundle\Http;
 
+use function sprintf;
+
 /**
  * Header names used by the DBSC protocol.
  *
@@ -52,4 +54,13 @@ final class SecureSessionHeaders
      * The `typ` header value of a DBSC proof JWS.
      */
     public const JWT_TYPE = 'dbsc+jwt';
+
+    /**
+     * Formats a `Secure-Session-Challenge` value: the challenge as a structured-field string with
+     * the session it is bound to in the required `id` parameter.
+     */
+    public static function challengeValue(string $challenge, string $sessionIdentifier): string
+    {
+        return sprintf('"%s";id="%s"', $challenge, $sessionIdentifier);
+    }
 }
