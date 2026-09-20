@@ -8,6 +8,7 @@ use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\ES256;
+use Jose\Component\Signature\Algorithm\None;
 use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
@@ -16,6 +17,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SpomkyLabs\DbscBundle\Exception\InvalidProofException;
 use SpomkyLabs\DbscBundle\Jwt\AlgorithmProvider;
+use SpomkyLabs\DbscBundle\Jwt\DeviceProof;
 use SpomkyLabs\DbscBundle\Jwt\DeviceProofVerifier;
 
 /**
@@ -192,9 +194,136 @@ final class DeviceProofVerifierTest extends TestCase
             ->verifyRegistration($token);
     }
 
-    private function verifier(): DeviceProofVerifier
+    #[Test]
+    public function itAcceptsAnUnsignedRegistrationProofWhenNoneIsAllowed(): void
     {
-        return new DeviceProofVerifier(new AlgorithmProvider([new ES256(), new RS256()], ['ES256', 'RS256']));
+        // Given a firewall that lists "none" and a browser that could not bind a key
+        $token = $this->signNone([
+            'jti' => 'challenge-none',
+        ]);
+
+        // When
+        $proof = $this->verifier(['ES256', 'none'])
+            ->verifyRegistration($token);
+
+        // Then the proof is accepted and recorded as not device-bound
+        static::assertSame('challenge-none', $proof->challenge());
+        static::assertSame(DeviceProof::UNBOUND_KEY, $proof->publicKeyJwk);
+        static::assertFalse($proof->isDeviceBound());
+    }
+
+    #[Test]
+    public function itRejectsAnUnsignedProofWhenNoneIsNotAllowed(): void
+    {
+        // Given the default algorithms (no "none")
+        $token = $this->signNone([
+            'jti' => 'x',
+        ]);
+
+        // Then
+        $this->expectException(InvalidProofException::class);
+        $this->expectExceptionMessage('none');
+
+        // When
+        $this->verifier()
+            ->verifyRegistration($token);
+    }
+
+    #[Test]
+    public function itRejectsAnUnsignedRegistrationProofThatEmbedsAKey(): void
+    {
+        // Given an alg "none" proof that nevertheless carries a jwk header (forbidden by the spec)
+        $token = $this->signNone([
+            'jti' => 'x',
+        ], JWKFactory::createECKey('P-256')->toPublic()->all());
+
+        // Then
+        $this->expectException(InvalidProofException::class);
+        $this->expectExceptionMessage('must not embed');
+
+        // When
+        $this->verifier(['ES256', 'none'])
+            ->verifyRegistration($token);
+    }
+
+    #[Test]
+    public function itRefreshesAnUnboundSessionWithAnUnsignedProof(): void
+    {
+        // Given a session registered with "none"
+        $token = $this->signNone([
+            'jti' => 'refresh-none',
+        ]);
+
+        // When
+        $proof = $this->verifier(['ES256', 'none'])
+            ->verifyRefresh($token, DeviceProof::UNBOUND_KEY);
+
+        // Then
+        static::assertSame('refresh-none', $proof->challenge());
+        static::assertFalse($proof->isDeviceBound());
+    }
+
+    #[Test]
+    public function itRejectsAnUnsignedRefreshProofForADeviceBoundSession(): void
+    {
+        // Given a device-bound session and an attacker downgrading to alg "none" on a firewall allowing it
+        $key = JWKFactory::createECKey('P-256');
+        $token = $this->signNone([
+            'jti' => 'x',
+        ]);
+
+        // Then the key type does not match the algorithm
+        $this->expectException(InvalidProofException::class);
+
+        // When
+        $this->verifier(['ES256', 'none'])
+            ->verifyRefresh($token, $key->toPublic()->all());
+    }
+
+    #[Test]
+    public function itRejectsASignedRefreshProofForAnUnboundSession(): void
+    {
+        // Given an unbound session and a proof signed with some EC key
+        $token = $this->sign(JWKFactory::createECKey('P-256'), [
+            'jti' => 'x',
+        ]);
+
+        // Then
+        $this->expectException(InvalidProofException::class);
+
+        // When
+        $this->verifier(['ES256', 'none'])
+            ->verifyRefresh($token, DeviceProof::UNBOUND_KEY);
+    }
+
+    /**
+     * @param list<string> $allowed
+     */
+    private function verifier(array $allowed = ['ES256', 'RS256']): DeviceProofVerifier
+    {
+        return new DeviceProofVerifier(new AlgorithmProvider([new ES256(), new RS256(), new None()], $allowed));
+    }
+
+    /**
+     * @param array<string, mixed>      $payload
+     * @param array<string, mixed>|null $jwk embedded in the `jwk` protected header when provided
+     */
+    private function signNone(array $payload, ?array $jwk = null): string
+    {
+        $header = [
+            'alg' => 'none',
+            'typ' => 'dbsc+jwt',
+        ];
+        if ($jwk !== null) {
+            $header['jwk'] = $jwk;
+        }
+
+        $jws = (new JWSBuilder(new AlgorithmManager([new None()])))->create()
+            ->withPayload(json_encode($payload, JSON_THROW_ON_ERROR))
+            ->addSignature(new JWK(DeviceProof::UNBOUND_KEY), $header)
+            ->build();
+
+        return (new CompactSerializer())->serialize($jws, 0);
     }
 
     /**

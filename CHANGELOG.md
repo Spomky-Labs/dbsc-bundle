@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Nothing.
+- `none` algorithm (spec: unsigned proofs from a browser that cannot bind a key). Off by default; a firewall opts in by listing `'none'` in `algorithms`. Such sessions get DBSC session management but no cookie-theft protection, are recorded with the `{"kty":"none"}` placeholder key (`DeviceProof::UNBOUND_KEY`), and can be told apart with `SessionBinding::isDeviceBound()` and, in replacement mode, `DeviceBoundSessionToken::isDeviceBound()`. The proof verifier now checks the key type against the proof algorithm before verifying, so an unsigned proof can never refresh a device-bound session (and vice versa). The profiler flags unbound bindings.
 
 ### Changed
 

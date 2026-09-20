@@ -112,6 +112,7 @@ final class DbscDataCollector implements DataCollectorInterface
                 'binding_session_id' => $binding?->sessionIdentifier,
                 'binding_user' => $binding?->userIdentifier,
                 'binding_jwk' => $binding?->publicKeyJwk,
+                'binding_device_bound' => $binding?->isDeviceBound(),
                 'binding_repository' => $repository !== null ? $repository::class : null,
                 'challenge_store' => $challengeStore !== null ? $challengeStore::class : null,
             ];
@@ -216,6 +217,7 @@ final class DbscDataCollector implements DataCollectorInterface
             'binding_session_id' => null,
             'binding_user' => null,
             'binding_jwk' => null,
+            'binding_device_bound' => null,
             'binding_repository' => null,
             'challenge_store' => null,
         ];

@@ -28,6 +28,16 @@ final class InvalidProofException extends DbscException
         return new self('The registration proof does not embed a public key.');
     }
 
+    public static function unexpectedKey(): self
+    {
+        return new self('A registration proof made with the "none" algorithm must not embed a public key.');
+    }
+
+    public static function keyAlgorithmMismatch(string $algorithm, string $keyType): self
+    {
+        return new self(sprintf('The proof algorithm "%s" cannot be verified with a "%s" key.', $algorithm, $keyType));
+    }
+
     public static function badSignature(): self
     {
         return new self('The proof signature could not be verified against the device key.');

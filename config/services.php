@@ -6,6 +6,7 @@ use Jose\Component\Core\Algorithm;
 use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\Algorithm\ES384;
 use Jose\Component\Signature\Algorithm\ES512;
+use Jose\Component\Signature\Algorithm\None;
 use Jose\Component\Signature\Algorithm\PS256;
 use Jose\Component\Signature\Algorithm\PS384;
 use Jose\Component\Signature\Algorithm\PS512;
@@ -58,6 +59,8 @@ return static function (ContainerConfigurator $container): void {
     $services->set(PS256::class);
     $services->set(PS384::class);
     $services->set(PS512::class);
+    // Unsigned proofs; only usable by a firewall that lists 'none' in its `algorithms`.
+    $services->set(None::class);
 
     // Stateless, configuration-free service shared by every firewall.
     $services->set(TokenGenerator::class);

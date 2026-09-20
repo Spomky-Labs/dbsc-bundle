@@ -32,6 +32,8 @@ security:
                 # Protocol
                 # Accepted JWS signature algorithms for the device-bound key.
                 # DBSC mandates ES256 and RS256; only algorithms registered as services are usable.
+                # Adding 'none' accepts unbound sessions from browsers that cannot hold a device
+                # key: DBSC session management, but NO cookie-theft protection (see protocol.md).
                 algorithms: ['ES256', 'RS256']
                 # Lifetime of a single-use challenge, in seconds.
                 challenge_ttl: 300

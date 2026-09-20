@@ -6,6 +6,7 @@ namespace SpomkyLabs\DbscBundle\Tests\Unit\EventListener;
 
 use DateTimeImmutable;
 use Jose\Component\Signature\Algorithm\ES256;
+use Jose\Component\Signature\Algorithm\None;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SpomkyLabs\DbscBundle\Challenge\ChallengeManager;
@@ -85,6 +86,26 @@ final class RegistrationHeaderListenerTest extends TestCase
     }
 
     #[Test]
+    public function itAdvertisesNoneOnlyWhenTheFirewallListsIt(): void
+    {
+        // Given two firewalls, one accepting unbound sessions
+        $passport = new SelfValidatingPassport(new UserBadge('alice'));
+        $passport->addBadge((new DeviceBoundSessionBadge())->enable());
+        $default = new Response();
+        $unbound = new Response();
+
+        // When
+        $this->listener()
+            ->onLoginSuccess($this->event($passport, $default));
+        $this->listener(['ES256', 'none'])
+            ->onLoginSuccess($this->event($passport, $unbound));
+
+        // Then only the opted-in firewall offers "none" to the browser
+        static::assertStringStartsWith('(ES256);', (string) $default->headers->get(SecureSessionHeaders::REGISTRATION));
+        static::assertStringStartsWith('(ES256 none);', (string) $unbound->headers->get(SecureSessionHeaders::REGISTRATION));
+    }
+
+    #[Test]
     public function itDoesNotEmitWhenTheBadgeIsPresentButDisabled(): void
     {
         // Given a login passport whose badge was not enabled by the conditions
@@ -115,11 +136,14 @@ final class RegistrationHeaderListenerTest extends TestCase
         static::assertFalse($response->headers->has(SecureSessionHeaders::REGISTRATION));
     }
 
-    private function listener(): RegistrationHeaderListener
+    /**
+     * @param list<string> $algorithms
+     */
+    private function listener(array $algorithms = ['ES256']): RegistrationHeaderListener
     {
         $clock = new FixedClock(new DateTimeImmutable('2026-01-01T00:00:00+00:00'));
         $challengeManager = new ChallengeManager(new InMemoryChallengeStore($clock), $clock, 300);
-        $algorithmProvider = new AlgorithmProvider([new ES256()], ['ES256']);
+        $algorithmProvider = new AlgorithmProvider([new ES256(), new None()], $algorithms);
 
         return new RegistrationHeaderListener($challengeManager, $algorithmProvider, '/dbsc/register');
     }

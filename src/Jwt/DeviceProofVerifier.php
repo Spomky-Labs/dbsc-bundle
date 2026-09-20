@@ -22,9 +22,19 @@ use Throwable;
  * Verifies the JWS proofs exchanged by the browser:
  *  - registration: the key is embedded in the proof and the signature proves possession;
  *  - refresh: the signature is checked against the previously stored device key.
+ *
+ * The `none` algorithm, when the firewall lists it, is verified through the same path with the
+ * {@see DeviceProof::UNBOUND_KEY} placeholder. The key type is checked against the algorithm
+ * before verification, so an unsigned proof never validates against a device-bound session and
+ * a signed proof never validates against an unbound one.
  */
 final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
 {
+    /**
+     * The JWS algorithm of an unsigned proof, sent by a browser that could not bind a key.
+     */
+    private const ALGORITHM_NONE = 'none';
+
     private CompactSerializer $serializer;
 
     private JWSVerifier $verifier;
@@ -45,6 +55,7 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
         [$jws, $claims] = $this->parse($token);
 
         $jwk = $this->extractEmbeddedKey($jws, $claims);
+        $this->assertKeyMatchesAlgorithm($jws, $jwk);
         if (! $this->verifier->verifyWithKey($jws, new JWK($jwk), 0)) {
             throw InvalidProofException::badSignature();
         }
@@ -65,6 +76,7 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
     {
         [$jws, $claims] = $this->parse($token);
 
+        $this->assertKeyMatchesAlgorithm($jws, $boundKey);
         if (! $this->verifier->verifyWithKey($jws, new JWK($boundKey), 0)) {
             throw InvalidProofException::badSignature();
         }
@@ -73,6 +85,30 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
         $this->assertAudience($proof, $expectedAudience);
 
         return $proof;
+    }
+
+    /**
+     * Rejects a proof whose algorithm cannot be used with the key it is verified against: the JWS
+     * verifier does not check key types itself, and the `none` algorithm accepts any key, so
+     * without this an unsigned proof would validate against a device-bound session.
+     *
+     * @param array<string, mixed> $key
+     */
+    private function assertKeyMatchesAlgorithm(JWS $jws, array $key): void
+    {
+        $alg = $jws->getSignature(0)
+            ->getProtectedHeader()['alg'] ?? null;
+        $kty = $key['kty'] ?? null;
+        if (! is_string($alg) || ! is_string($kty)) {
+            throw InvalidProofException::keyAlgorithmMismatch(is_string($alg) ? $alg : 'none', is_string($kty) ? $kty : 'none');
+        }
+
+        $allowedKeyTypes = $this->algorithmProvider->getManager()
+            ->get($alg)
+            ->allowedKeyTypes();
+        if (! in_array($kty, $allowedKeyTypes, true)) {
+            throw InvalidProofException::keyAlgorithmMismatch($alg, $kty);
+        }
     }
 
     /**
@@ -148,14 +184,27 @@ final readonly class DeviceProofVerifier implements DeviceProofVerifierInterface
      * carries it as a `jwk` protected header; an earlier revision used a `key` payload claim,
      * still accepted as a fallback for compatibility.
      *
+     * A proof made with the `none` algorithm (only reachable when the firewall lists it) embeds no
+     * key, and the spec forbids a `jwk` header on it; the {@see DeviceProof::UNBOUND_KEY}
+     * placeholder is returned so the session is recorded as not device-bound.
+     *
      * @param array<string, mixed> $claims
      *
      * @return array<string, mixed>
      */
     private function extractEmbeddedKey(JWS $jws, array $claims): array
     {
-        $key = $jws->getSignature(0)
-            ->getProtectedHeader()['jwk'] ?? $claims['key'] ?? null;
+        $header = $jws->getSignature(0)
+            ->getProtectedHeader();
+        if (($header['alg'] ?? null) === self::ALGORITHM_NONE) {
+            if (isset($header['jwk']) || isset($claims['key'])) {
+                throw InvalidProofException::unexpectedKey();
+            }
+
+            return DeviceProof::UNBOUND_KEY;
+        }
+
+        $key = $header['jwk'] ?? $claims['key'] ?? null;
         if (! is_array($key) || $key === []) {
             throw InvalidProofException::missingKey();
         }

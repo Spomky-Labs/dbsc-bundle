@@ -259,9 +259,21 @@
                             <tbody>
                                 <tr><th scope="row" class="key" style="width: 220px;">Session identifier</th><td><code>{{ firewall.binding_session_id }}</code></td></tr>
                                 <tr><th scope="row" class="key">User</th><td>{{ firewall.binding_user ?? '(none)' }}</td></tr>
+                                <tr>
+                                    <th scope="row" class="key">Device-bound</th>
+                                    <td>
+                                        {% if firewall.binding_device_bound is same as(false) %}
+                                            <span class="label status-warning">no</span> — registered with the <code>none</code> algorithm: refreshes are unsigned, no cookie-theft protection
+                                        {% else %}yes{% endif %}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
-                        <h6>Public key (JWK)</h6>
+                        {% if firewall.binding_device_bound is same as(false) %}
+                            <h6>Key placeholder (unbound session)</h6>
+                        {% else %}
+                            <h6>Public key (JWK)</h6>
+                        {% endif %}
                         {{ helper.kv(firewall.binding_jwk) }}
                     {% endif %}
                 {% endfor %}
