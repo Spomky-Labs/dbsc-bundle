@@ -50,4 +50,20 @@ final class ContainerTest extends KernelTestCase
         static::assertSame('/dbsc/secured/register', $routes->get('dbsc_register_secured')?->getPath());
         static::assertSame('/dbsc/secured/refresh', $routes->get('dbsc_refresh_secured')?->getPath());
     }
+
+    #[Test]
+    public function itServesTheWellKnownDocumentWhenFederationIsConfigured(): void
+    {
+        // Given the test kernel declares itself a session provider for https://rp.example
+        self::bootKernel();
+        /** @var Router $router */
+        $router = static::getContainer()->get('router');
+
+        // Then the well-known route exists
+        static::assertSame(
+            '/.well-known/device-bound-sessions',
+            $router->getRouteCollection()
+                ->get('dbsc_well_known')?->getPath()
+        );
+    }
 }

@@ -31,7 +31,9 @@ final readonly class RegistrationHandler implements RegistrationHandlerInterface
     /**
      * Verifies the registration proof, consumes the login challenge, records the binding and
      * issues the first bound cookie. When an `authorization` value was bound to the challenge, the
-     * proof must echo it back unchanged (spec § 9.10) or it is rejected.
+     * proof must echo it back unchanged (spec § 9.10) or it is rejected. When a `provider_key`
+     * thumbprint was bound to it (federated registration), the embedded key must hash to that
+     * thumbprint, i.e. be the provider's key, or it is rejected.
      */
     public function register(
         string $proofToken,
@@ -47,6 +49,11 @@ final readonly class RegistrationHandler implements RegistrationHandlerInterface
             && ! hash_equals($expectedAuthorization, $proof->authorization() ?? '')
         ) {
             throw InvalidProofException::authorizationMismatch();
+        }
+
+        $expectedProviderKey = $challenge->providerKey;
+        if ($expectedProviderKey !== null && ! hash_equals($expectedProviderKey, $proof->keyThumbprint())) {
+            throw InvalidProofException::providerKeyMismatch();
         }
 
         $sessionIdentifier = $this->tokens->generate();

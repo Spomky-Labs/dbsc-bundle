@@ -19,6 +19,7 @@ use SpomkyLabs\DbscBundle\Challenge\InMemoryChallengeStore;
 use SpomkyLabs\DbscBundle\Exception\InvalidProofException;
 use SpomkyLabs\DbscBundle\Jwt\AlgorithmProvider;
 use SpomkyLabs\DbscBundle\Jwt\DeviceProofVerifier;
+use SpomkyLabs\DbscBundle\Jwt\JwkThumbprint;
 use SpomkyLabs\DbscBundle\Protocol\RegistrationHandler;
 use SpomkyLabs\DbscBundle\Protocol\SessionConfigFactory;
 use SpomkyLabs\DbscBundle\Protocol\TokenGenerator;
@@ -97,6 +98,44 @@ final class RegistrationHandlerTest extends TestCase
 
         // Then
         static::assertNotNull($this->bindings->findBySessionIdentifier($issued->sessionIdentifier));
+    }
+
+    #[Test]
+    public function itRegistersAFederatedSessionWhenTheProofEmbedsTheProviderKey(): void
+    {
+        // Given a challenge bound to the provider key thumbprint, and a proof made with that very key
+        $providerKey = JWKFactory::createECKey('P-256');
+        $challenge = $this->challengeManager->issue(null, null, JwkThumbprint::sha256($providerKey->toPublic()->all()));
+        $proof = $this->sign($providerKey, [
+            'jti' => $challenge->value,
+        ]);
+
+        // When
+        $issued = $this->handler()
+            ->register($proof, 'alice', 'https://rp.example');
+
+        // Then the binding records the shared key
+        $binding = $this->bindings->findBySessionIdentifier($issued->sessionIdentifier);
+        static::assertSame(JwkThumbprint::sha256($providerKey->toPublic()->all()), $binding?->keyThumbprint());
+    }
+
+    #[Test]
+    public function itRejectsAFederatedRegistrationMadeWithAnotherKey(): void
+    {
+        // Given a challenge expecting the provider key, and a proof made with a fresh key instead
+        $providerKey = JWKFactory::createECKey('P-256');
+        $challenge = $this->challengeManager->issue(null, null, JwkThumbprint::sha256($providerKey->toPublic()->all()));
+        $proof = $this->sign(JWKFactory::createECKey('P-256'), [
+            'jti' => $challenge->value,
+        ]);
+
+        // Then
+        $this->expectException(InvalidProofException::class);
+        $this->expectExceptionMessage('provider_key');
+
+        // When
+        $this->handler()
+            ->register($proof, 'alice', 'https://rp.example');
     }
 
     private function handler(): RegistrationHandler

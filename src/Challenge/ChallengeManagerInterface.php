@@ -9,7 +9,16 @@ namespace SpomkyLabs\DbscBundle\Challenge;
  */
 interface ChallengeManagerInterface
 {
-    public function issue(?string $sessionIdentifier = null, ?string $authorization = null): Challenge;
+    /**
+     * Issues a single-use challenge, recording what the resulting proof will be checked against:
+     * the session it belongs to (refresh), the `authorization` value it must echo and the
+     * `provider_key` thumbprint its embedded key must hash to (registration).
+     */
+    public function issue(
+        ?string $sessionIdentifier = null,
+        ?string $authorization = null,
+        ?string $providerKey = null,
+    ): Challenge;
 
     /**
      * Validates and consumes a presented challenge so it cannot be replayed, returning the

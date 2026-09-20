@@ -20,6 +20,10 @@ use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
  * The header is emitted only when the login passport carries a {@see DeviceBoundSessionBadge},
  * the analogue of opting in with a RememberMeBadge. A device-bound re-authentication never
  * carries it, so registration is not re-triggered on every request.
+ *
+ * When the badge names a session provider, the `provider_key`, `provider_session_id` and
+ * `provider_url` parameters ask the browser to reuse that provider's device key, and the
+ * expected key thumbprint is bound to the challenge for the registration handler to check.
  */
 final readonly class RegistrationHeaderListener
 {
@@ -44,7 +48,8 @@ final readonly class RegistrationHeaderListener
         }
 
         $authorization = $badge->getAuthorization();
-        $challenge = $this->challengeManager->issue(null, $authorization);
+        $provider = $badge->getProvider();
+        $challenge = $this->challengeManager->issue(null, $authorization, $provider?->keyThumbprint);
         $algorithms = implode(' ', $this->algorithmProvider->getAllowedNames());
 
         $header = sprintf(
@@ -55,6 +60,14 @@ final readonly class RegistrationHeaderListener
         );
         if ($authorization !== null) {
             $header .= sprintf(';authorization="%s"', $authorization);
+        }
+        if ($provider !== null) {
+            $header .= sprintf(
+                ';provider_key="%s";provider_session_id="%s";provider_url="%s"',
+                $provider->keyThumbprint,
+                $provider->sessionId,
+                $provider->url,
+            );
         }
 
         $response->headers->set(SecureSessionHeaders::REGISTRATION, $header);

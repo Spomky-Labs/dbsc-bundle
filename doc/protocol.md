@@ -113,6 +113,49 @@ document and a cleared bound cookie, the spec's deliberate "this session is over
 way the device is signed out even though it still holds the device key, because the server no longer
 issues a fresh cookie for it.
 
+## Federated sessions (key sharing)
+
+A relying party (RP) can ask the browser to bind its session to the device key already held for a
+session on a provider (SP), so a federated login yields one device key per device rather than one
+per site. The RP names the provider session in its registration header:
+
+```
+Secure-Session-Registration: (ES256 RS256);challenge="…";path="/dbsc/main/register";provider_key="<thumbprint>";provider_session_id="<sp session id>";provider_url="https://idp.example"
+```
+
+`provider_key` is the SHA-256 JWK thumbprint (RFC 7638, base64url without padding) of the provider
+session's key. The browser reuses that key only after fetching, without credentials, both
+`/.well-known/device-bound-sessions` documents and checking that the SP lists the RP in
+`relying_origins` and that the RP names the SP as `provider_origin`. It then registers with a
+proof embedding the shared key, which the RP verifies hashes to the announced `provider_key`.
+
+The bundle implements both halves:
+
+- **Relying party.** Hand the provider coordinates, obtained out of band from the provider (e.g.
+  claims of the federated login), to the badge:
+
+  ```php
+  use SpomkyLabs\DbscBundle\Protocol\SessionProvider;
+
+  $passport->addBadge((new DeviceBoundSessionBadge())->enable()->setProvider(
+      new SessionProvider('https://idp.example', $providerSessionId, $providerKeyThumbprint),
+  ));
+  ```
+
+  The header carries the three `provider_*` parameters, the expected thumbprint is bound to the
+  challenge, and the registration handler rejects a proof whose embedded key does not hash to it.
+  Declare the provider in the global configuration so the RP document is served:
+  `dbsc.federation.provider_origin: 'https://idp.example'`.
+
+- **Session provider.** Declare the relying parties allowed to share keys
+  (`dbsc.federation.relying_origins`) so the SP document is served, and give each relying party
+  the session identifier and key thumbprint of the user's session on the provider:
+  `SessionBinding::sessionIdentifier` and `SessionBinding::keyThumbprint()` on the binding stored
+  in your `SessionBindingRepository`.
+
+Refresh and termination of a federated session are unchanged: the RP session has its own
+identifier, cookie and refresh endpoint; only the key is shared.
+
 ## Browser-skipped sessions
 
 When a supporting browser cannot run DBSC for a session (the refresh endpoint was unreachable,

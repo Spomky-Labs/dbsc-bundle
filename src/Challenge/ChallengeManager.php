@@ -19,8 +19,11 @@ final readonly class ChallengeManager implements ChallengeManagerInterface
     ) {
     }
 
-    public function issue(?string $sessionIdentifier = null, ?string $authorization = null): Challenge
-    {
+    public function issue(
+        ?string $sessionIdentifier = null,
+        ?string $authorization = null,
+        ?string $providerKey = null,
+    ): Challenge {
         $value = self::base64UrlEncode(random_bytes(32));
         $challenge = new Challenge(
             $value,
@@ -28,6 +31,7 @@ final readonly class ChallengeManager implements ChallengeManagerInterface
                 ->getTimestamp() + $this->ttl,
             $sessionIdentifier,
             $authorization,
+            $providerKey,
         );
         $this->store->save($challenge);
 

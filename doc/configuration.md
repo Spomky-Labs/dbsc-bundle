@@ -1,8 +1,9 @@
 # Configuration reference
 
-DBSC has **no global configuration**. Everything is configured per firewall, under the
-`device_bound_session` key of the firewall that should use it. A firewall enables DBSC, and tunes
-its endpoints, cookie, accepted algorithms and stores, in one place.
+DBSC is configured per firewall, under the `device_bound_session` key of the firewall that should
+use it. A firewall enables DBSC, and tunes its endpoints, cookie, accepted algorithms and stores,
+in one place. The only global setting is [federation](#federation-global), because the
+`/.well-known/device-bound-sessions` document is per origin, not per firewall.
 
 Every option has a sensible default, so `device_bound_session: true` is enough to start (additive
 mode, opt-in by the `_device_bound_session` checkbox). The full tree with its defaults:
@@ -172,3 +173,27 @@ Because configuration is per firewall, each firewall gets its own isolated graph
 endpoints, algorithms and stores. Two firewalls can run DBSC in different modes side by side, for
 example an additive `main` firewall and a full-replacement `api` firewall, without sharing any
 state.
+
+## Federation (global)
+
+Federated sessions let a relying party register a session that shares the device key of a session
+on an identity/session provider (see [Protocol](protocol.md#federated-sessions-key-sharing)). The
+browser only does so if both origins publish a matching `/.well-known/device-bound-sessions`
+document, which the bundle serves from this global configuration. A site is either a relying party
+or a provider, never both (the spec forbids a document carrying both keys):
+
+```yaml
+# config/packages/dbsc.yaml
+dbsc:
+    federation:
+        # Relying party: the origin of the provider whose device keys this site reuses.
+        provider_origin: null
+        # Session provider: origins allowed to register sessions sharing this site's keys.
+        relying_origins: []
+        # Session provider, optional: origins allowed to register site-scoped sessions here.
+        registering_origins: []
+```
+
+When nothing is set, no document is served. The route (`dbsc_well_known`, `GET
+/.well-known/device-bound-sessions`) must be publicly reachable: browsers fetch it without
+credentials.

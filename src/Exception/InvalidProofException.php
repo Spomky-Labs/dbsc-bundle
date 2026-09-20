@@ -38,6 +38,11 @@ final class InvalidProofException extends DbscException
         return new self('The registration proof does not echo the expected "authorization" value.');
     }
 
+    public static function providerKeyMismatch(): self
+    {
+        return new self('The registration proof does not embed the key announced as "provider_key".');
+    }
+
     public static function audienceMismatch(string $expected, string $actual): self
     {
         return new self(sprintf('The proof "aud" is "%s", expected "%s".', $actual, $expected));

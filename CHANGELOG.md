@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Nothing.
+- Federated sessions (key sharing, spec § 8.11). Relying party: `DeviceBoundSessionBadge::setProvider(new SessionProvider($url, $sessionId, $keyThumbprint))` emits the `provider_key`, `provider_session_id` and `provider_url` registration parameters, binds the expected thumbprint to the challenge and rejects a registration proof whose embedded key does not hash to it. Session provider: `SessionBinding::keyThumbprint()` (and `DeviceProof::keyThumbprint()`) expose the SHA-256 JWK thumbprint to hand to relying parties. Both: the new global `dbsc.federation` configuration (`provider_origin` or `relying_origins` / `registering_origins`, mutually exclusive as the spec requires) serves `/.well-known/device-bound-sessions` through the `dbsc_well_known` route. `ChallengeManagerInterface::issue()` accepts the provider key as a third argument; the profiler shows the provider parameters of a registration.
 
 ### Changed
 
