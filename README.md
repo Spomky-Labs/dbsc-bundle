@@ -6,8 +6,10 @@
 from cookie theft by binding them to a hardware-backed private key (TPM) held by the user's
 browser.
 
-> Status: **early work in progress**. The [DBSC specification](https://w3c.github.io/webappsec-dbsc/)
-> is still a draft shipping behind a Chrome origin trial, so header names and payloads may change.
+> Status: DBSC is generally available in Chrome (146+ on Windows, TPM-backed; 147+ on macOS,
+> Secure Enclave-backed) and the bundle follows the current
+> [DBSC specification](https://w3c.github.io/webappsec-dbsc/) editor's draft. The document is
+> still a W3C draft, so minor protocol details may evolve; the bundle tracks them across releases.
 
 ## What it does
 

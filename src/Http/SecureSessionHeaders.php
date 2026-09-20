@@ -7,8 +7,8 @@ namespace SpomkyLabs\DbscBundle\Http;
 /**
  * Header names used by the DBSC protocol.
  *
- * The specification is still a draft; earlier revisions used the `Sec-Session-*` prefix.
- * This bundle follows the current `Secure-Session-*` / `Sec-Secure-Session-*` naming.
+ * Earlier revisions of the specification used the `Sec-Session-*` prefix. This bundle follows
+ * the current `Secure-Session-*` / `Sec-Secure-Session-*` naming, the one shipped by Chrome.
  *
  * @see https://w3c.github.io/webappsec-dbsc/
  */
