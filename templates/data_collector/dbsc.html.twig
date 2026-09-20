@@ -112,8 +112,16 @@
                             {% if endpoint.type == 'refresh' %}
                                 <tr><th>Phase</th><td>{{ endpoint.phase == 'challenge_request' ? 'challenge request (no proof)' : 'proof submission' }}</td></tr>
                                 <tr><th>Session id (Sec-Secure-Session-Id)</th><td>{{ endpoint.session_id ? ('<code>' ~ endpoint.session_id ~ '</code>')|raw : '(none)' }}</td></tr>
-                                <tr><th>Challenge issued</th><td>{{ endpoint.challenge ? ('<code>' ~ endpoint.challenge ~ '</code>')|raw : '(none)' }}</td></tr>
                             {% endif %}
+                            <tr>
+                                <th>Challenge issued</th>
+                                <td>
+                                    {% if endpoint.challenge %}
+                                        <code>{{ endpoint.challenge }}</code>
+                                        {% if endpoint.status == 200 %}(pre-provisioned for the next refresh){% endif %}
+                                    {% else %}(none){% endif %}
+                                </td>
+                            </tr>
                             <tr><th>Proof submitted</th><td>{{ endpoint.had_proof ? 'yes (Secure-Session-Response)' : 'no' }}</td></tr>
                             <tr>
                                 <th>Bound cookie</th>
@@ -210,6 +218,7 @@
                             <tr><th>Refresh endpoint</th><td><code>{{ firewall.refresh_path }}</code></td></tr>
                             <tr><th>Algorithms</th><td>{{ firewall.algorithms|join(', ') }}</td></tr>
                             <tr><th>Challenge TTL</th><td>{{ firewall.challenge_ttl }} s</td></tr>
+                            <tr><th>Challenge pre-provisioning</th><td>{{ firewall.preprovision_challenge ? 'enabled (next challenge sent on successful responses)' : 'disabled' }}</td></tr>
                             <tr><th>Session lifetime</th><td>{{ firewall.session_lifetime is null ? 'never expires' : firewall.session_lifetime ~ ' s' }}</td></tr>
                             <tr><th>Session scope</th><td>{{ firewall.include_site ? 'site-scoped (include_site)' : 'origin-scoped' }}</td></tr>
                             <tr>

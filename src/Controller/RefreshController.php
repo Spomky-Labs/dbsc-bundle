@@ -13,9 +13,10 @@ use SpomkyLabs\DbscBundle\Exception\SessionExpiredException;
 use SpomkyLabs\DbscBundle\Exception\UnknownSessionException;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactoryInterface;
 use SpomkyLabs\DbscBundle\Http\SecureSessionHeaders;
+use SpomkyLabs\DbscBundle\Protocol\ChallengePreprovisionerInterface;
+use SpomkyLabs\DbscBundle\Protocol\NullChallengePreprovisioner;
 use SpomkyLabs\DbscBundle\Protocol\RefreshHandlerInterface;
 use SpomkyLabs\DbscBundle\Protocol\SessionConfigFactoryInterface;
-use function sprintf;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,6 +26,9 @@ use Symfony\Component\HttpFoundation\Response;
  * `Secure-Session-Challenge` carrying the session id); the browser retries with a signed proof
  * in `Secure-Session-Response`, which is verified before a new bound cookie is issued. A dead or
  * expired session is answered with a terminating 4xx so the browser stops the session.
+ *
+ * A successful refresh is handed to the {@see ChallengePreprovisionerInterface}, which may attach
+ * the next challenge to the response so the browser skips the unsigned first request next time.
  */
 final readonly class RefreshController
 {
@@ -35,6 +39,7 @@ final readonly class RefreshController
         private ClockInterface $clock,
         private SessionConfigFactoryInterface $configFactory,
         private LoggerInterface $logger = new NullLogger(),
+        private ChallengePreprovisionerInterface $preprovisioner = new NullChallengePreprovisioner(),
     ) {
     }
 
@@ -85,6 +90,7 @@ final readonly class RefreshController
         $response->headers->setCookie(
             $this->cookieFactory->create($issued->cookieValue, $this->clock->now()->getTimestamp()),
         );
+        $this->preprovisioner->preprovision($response, $issued->sessionIdentifier);
 
         return $response;
     }
@@ -119,7 +125,7 @@ final readonly class RefreshController
         $response = new JsonResponse(null, Response::HTTP_FORBIDDEN);
         $response->headers->set(
             SecureSessionHeaders::CHALLENGE,
-            sprintf('"%s";id="%s"', $challenge->value, $sessionIdentifier),
+            SecureSessionHeaders::challengeValue($challenge->value, $sessionIdentifier),
         );
 
         return $response;

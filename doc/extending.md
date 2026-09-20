@@ -30,6 +30,7 @@ factory, session-config factory and the registration/refresh handlers, wired fro
 | `Protocol\RegistrationHandler` | Handles the registration step |
 | `Protocol\RefreshHandler` | Handles the refresh step |
 | `Protocol\SessionConfigFactory` | Builds the session configuration document |
+| `Protocol\ChallengePreprovisioner` | Attaches the next challenge to successful responses (`preprovision_challenge`); `NullChallengePreprovisioner` otherwise |
 | `Http\BoundCookieFactory` | Builds the short-lived bound cookie |
 
 ## Global services

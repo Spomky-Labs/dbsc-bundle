@@ -100,6 +100,7 @@ final class DbscDataCollector implements DataCollectorInterface
                 'cookie_preview' => $present ? $this->preview((string) $cookieValue) : null,
                 'algorithms' => $config['algorithms'] ?? [],
                 'challenge_ttl' => $config['challenge_ttl'] ?? null,
+                'preprovision_challenge' => (bool) ($config['preprovision_challenge'] ?? false),
                 'session_lifetime' => $config['session_lifetime'] ?? null,
                 'authenticate' => (bool) ($config['authenticate'] ?? false),
                 'always' => (bool) ($config['always'] ?? false),
@@ -204,6 +205,7 @@ final class DbscDataCollector implements DataCollectorInterface
             'cookie_preview' => null,
             'algorithms' => [],
             'challenge_ttl' => null,
+            'preprovision_challenge' => false,
             'session_lifetime' => null,
             'authenticate' => false,
             'always' => false,
@@ -295,6 +297,7 @@ final class DbscDataCollector implements DataCollectorInterface
             'had_proof' => $proof !== null,
             'proof_header' => $proof !== null ? $this->decodeSegment($proof, 0) : null,
             'proof_payload' => $proof !== null ? $this->decodeSegment($proof, 1) : null,
+            'challenge' => $response->headers->get(SecureSessionHeaders::CHALLENGE),
             'outcome' => match (true) {
                 $status === Response::HTTP_OK => 'registered',
                 $status === Response::HTTP_BAD_REQUEST => 'registration_failed',

@@ -19,13 +19,13 @@ final readonly class ChallengeManager implements ChallengeManagerInterface
     ) {
     }
 
-    public function issue(?string $sessionIdentifier = null, ?string $authorization = null): Challenge
+    public function issue(?string $sessionIdentifier = null, ?string $authorization = null, ?int $ttl = null): Challenge
     {
         $value = self::base64UrlEncode(random_bytes(32));
         $challenge = new Challenge(
             $value,
             $this->clock->now()
-                ->getTimestamp() + $this->ttl,
+                ->getTimestamp() + ($ttl ?? $this->ttl),
             $sessionIdentifier,
             $authorization,
         );

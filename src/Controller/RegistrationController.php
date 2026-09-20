@@ -10,6 +10,8 @@ use Psr\Log\NullLogger;
 use SpomkyLabs\DbscBundle\Exception\DbscException;
 use SpomkyLabs\DbscBundle\Http\BoundCookieFactoryInterface;
 use SpomkyLabs\DbscBundle\Http\SecureSessionHeaders;
+use SpomkyLabs\DbscBundle\Protocol\ChallengePreprovisionerInterface;
+use SpomkyLabs\DbscBundle\Protocol\NullChallengePreprovisioner;
 use SpomkyLabs\DbscBundle\Protocol\RegistrationHandlerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +22,10 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * DBSC registration endpoint (StartSession). The browser sends the registration proof (a JWS
  * embedding the device public key) in the `Secure-Session-Response` header, while still
  * carrying the authenticated session cookie.
+ *
+ * A successful registration is handed to the {@see ChallengePreprovisionerInterface}, which may
+ * attach the first refresh challenge to the response so the browser skips the unsigned first
+ * request of its first refresh.
  */
 final readonly class RegistrationController
 {
@@ -29,6 +35,7 @@ final readonly class RegistrationController
         private TokenStorageInterface $tokenStorage,
         private ClockInterface $clock,
         private LoggerInterface $logger = new NullLogger(),
+        private ChallengePreprovisionerInterface $preprovisioner = new NullChallengePreprovisioner(),
     ) {
     }
 
@@ -57,6 +64,7 @@ final readonly class RegistrationController
         $response->headers->setCookie(
             $this->cookieFactory->create($issued->cookieValue, $this->clock->now()->getTimestamp()),
         );
+        $this->preprovisioner->preprovision($response, $issued->sessionIdentifier);
 
         return $response;
     }
